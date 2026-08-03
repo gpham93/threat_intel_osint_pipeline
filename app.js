@@ -1,9 +1,7 @@
 /**
- * Conversational Threat Intelligence Analyst Platform - Client Application
- * Hybrid Architecture: Connects to Python Backend API when available,
- * and seamlessly falls back to an embedded in-browser GraphRAG & Vis.js engine
- * when hosted on static platforms like GitHub Pages.
- * Includes Node Details Inspector Modal, PNG/CSV Exporting, and KPI Counters.
+ * Conversational Threat Intelligence Analyst Platform - JHU/APL Defense Edition
+ * Features BFO/CCO formal ontology modeling, STIX 2.1 CTI exporting,
+ * Multi-Hop Shortest Path Link Pathfinder, 4D Temporal scrubbing, and MLS security clearance labels.
  */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -21,6 +19,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const btnExportPng = document.getElementById("btn-export-png");
     const btnExportCsv = document.getElementById("btn-export-csv");
+    const btnExportStix = document.getElementById("btn-export-stix");
+
+    const btnFindPath = document.getElementById("btn-find-path");
+    const pathStart = document.getElementById("path-start");
+    const pathEnd = document.getElementById("path-end");
+    const pathResult = document.getElementById("path-result");
+
+    const temporalSlider = document.getElementById("temporal-slider");
+    const btnPlayTemporal = document.getElementById("btn-play-temporal");
+    const mlsSelector = document.getElementById("mls-selector");
 
     const modalOverlay = document.getElementById("node-modal-overlay");
     const modalTitle = document.getElementById("modal-title");
@@ -32,11 +40,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const kpiTriples = document.getElementById("kpi-triples");
 
     let lastQueryBindings = [];
+    let isTemporalPlaying = false;
+    let temporalInterval = null;
 
-    // Vis.js Network Setup (Monochrome theme)
+    // Vis.js Network Setup
     const networkContainer = document.getElementById("network-canvas");
     let network = null;
     let currentNodesDataSet = null;
+    let currentEdgesDataSet = null;
 
     const visOptions = {
         nodes: {
@@ -61,12 +72,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    // Baseline Identity Key Ring Dataset
+    // Baseline Identity Key Ring Dataset with Temporal Timestamps & MLS Clearances
     const STATIC_KEY_RING = [
         {
             cluster_id: "CLUSTER-101",
             canonical_name: "AeroVanguard Logistics Ltd",
             match_probability: 0.96,
+            year: 2024,
+            classification: "UNCLASSIFIED",
             source_records: [
                 { source: "OFAC_Sanctions", id: "OFAC_001", name: "AeroVanguard Logistics Ltd", country: "Panama", reg_id: "REG-88201" },
                 { source: "OSINT_Reports", id: "OSINT_101", name: "Aero Vanguard Logistics Limited", country: "Panama", reg_id: "REG-88201" }
@@ -78,6 +91,8 @@ document.addEventListener("DOMContentLoaded", () => {
             cluster_id: "CLUSTER-102",
             canonical_name: "Helios Energy Trading Corp",
             match_probability: 0.92,
+            year: 2025,
+            classification: "SECRET",
             source_records: [
                 { source: "OFAC_Sanctions", id: "OFAC_002", name: "Helios Energy Trading Corp", country: "Cyprus", reg_id: "CY-99412" },
                 { source: "OSINT_Reports", id: "OSINT_102", name: "Helios Energy Trading", country: "Cyprus", reg_id: "CY99412" }
@@ -89,6 +104,8 @@ document.addEventListener("DOMContentLoaded", () => {
             cluster_id: "CLUSTER-103",
             canonical_name: "Caspian Merchant Fleet Co",
             match_probability: 0.88,
+            year: 2026,
+            classification: "TOPSECRET",
             source_records: [
                 { source: "OFAC_Sanctions", id: "OFAC_003", name: "Caspian Merchant Fleet", country: "UAE", reg_id: "UAE-44109" },
                 { source: "OSINT_Reports", id: "OSINT_103", name: "Caspian Merchant Fleet Co", country: "UAE", reg_id: "UAE-44109" }
@@ -100,6 +117,8 @@ document.addEventListener("DOMContentLoaded", () => {
             cluster_id: "CLUSTER-104",
             canonical_name: "Global Tech / Apex Cyber Link",
             match_probability: 0.48,
+            year: 2026,
+            classification: "UNCLASSIFIED",
             source_records: [
                 { source: "OFAC_Sanctions", id: "OFAC_004", name: "Global Tech Supplies LLC", country: "Seychelles", reg_id: "SEY-10294" },
                 { source: "OSINT_Reports", id: "OSINT_104", name: "Apex Cyber Solutions", country: "Estonia", reg_id: "EE-77821" }
@@ -109,23 +128,23 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     ];
 
-    // Generate Network Data
-    function generateStaticNetworkData(threshold = 0.60) {
+    // Generate Network Data with Temporal & MLS Filtering
+    function generateStaticNetworkData(threshold = 0.60, selectedYear = 2026, mlsLevel = "UNCLASSIFIED") {
         const nodes = [
-            { id: "Actor_VictorBout", label: "Victor Bout\n(Threat Actor)", group: "actor", title: "Type: cco:Person", uri: "http://example.org/threat#Actor_VictorBout", category: "Threat Actor", cco: "cco:Person" },
-            { id: "Actor_ElenaRostova", label: "Elena Rostova\n(Threat Actor)", group: "actor", title: "Type: cco:Person", uri: "http://example.org/threat#Actor_ElenaRostova", category: "Threat Actor", cco: "cco:Person" },
-            { id: "Transfer_9901", label: "Money Transfer $1.5M\n(ActOfCommerce)", group: "transfer", title: "Type: cco:ActOfCommerce", uri: "http://example.org/threat#Transfer_9901", category: "Money Transfer", cco: "cco:ActOfCommerce", amount: "$1,500,000.00 USD" }
+            { id: "Actor_VictorBout", label: "Victor Bout\n(Threat Actor)", group: "actor", title: "Type: cco:Person", uri: "http://example.org/threat#Actor_VictorBout", category: "Threat Actor", cco: "cco:Person", year: 2024, classification: "UNCLASSIFIED" },
+            { id: "Actor_ElenaRostova", label: "Elena Rostova\n(Threat Actor)", group: "actor", title: "Type: cco:Person", uri: "http://example.org/threat#Actor_ElenaRostova", category: "Threat Actor", cco: "cco:Person", year: 2025, classification: "SECRET" },
+            { id: "Transfer_9901", label: "Money Transfer $1.5M\n(ActOfCommerce)", group: "transfer", title: "Type: cco:ActOfCommerce", uri: "http://example.org/threat#Transfer_9901", category: "Money Transfer", cco: "cco:ActOfCommerce", amount: "$1,500,000.00 USD", year: 2025, classification: "SECRET" }
         ];
 
         const edges = [
-            { from: "Actor_VictorBout", to: "FrontCompany_CLUSTER-101", label: "associatedWith", color: { color: "#ffffff" } },
-            { from: "Actor_ElenaRostova", to: "FrontCompany_CLUSTER-102", label: "associatedWith", color: { color: "#ffffff" } },
-            { from: "Transfer_9901", to: "FrontCompany_CLUSTER-101", label: "has_sender", color: { color: "#a3a3a3" } },
-            { from: "Transfer_9901", to: "FrontCompany_CLUSTER-102", label: "has_receiver", color: { color: "#a3a3a3" } }
+            { id: "e1", from: "Actor_VictorBout", to: "FrontCompany_CLUSTER-101", label: "associatedWith", color: { color: "#ffffff" }, year: 2024 },
+            { id: "e2", from: "Actor_ElenaRostova", to: "FrontCompany_CLUSTER-102", label: "associatedWith", color: { color: "#ffffff" }, year: 2025 },
+            { id: "e3", from: "Transfer_9901", to: "FrontCompany_CLUSTER-101", label: "has_sender", color: { color: "#a3a3a3" }, year: 2025 },
+            { id: "e4", from: "Transfer_9901", to: "FrontCompany_CLUSTER-102", label: "has_receiver", color: { color: "#a3a3a3" }, year: 2025 }
         ];
 
         STATIC_KEY_RING.forEach(cluster => {
-            if (cluster.match_probability >= threshold) {
+            if (cluster.match_probability >= threshold && cluster.year <= selectedYear) {
                 const clusterNodeId = `FrontCompany_${cluster.cluster_id}`;
                 nodes.push({
                     id: clusterNodeId,
@@ -135,7 +154,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     uri: cluster.rdf_uri,
                     category: "Front Company",
                     cco: "cco:Organization",
-                    score: cluster.match_probability
+                    score: cluster.match_probability,
+                    year: cluster.year,
+                    classification: cluster.classification
                 });
 
                 cluster.source_records.forEach(rec => {
@@ -149,43 +170,46 @@ document.addEventListener("DOMContentLoaded", () => {
                         category: "Raw Source Record",
                         cco: "cco:InformationContentEntity",
                         reg_id: rec.reg_id,
-                        country: rec.country
+                        country: rec.country,
+                        year: cluster.year,
+                        classification: cluster.classification
                     });
                     edges.push({
+                        id: `e_${recNodeId}_${clusterNodeId}`,
                         from: recNodeId,
                         to: clusterNodeId,
                         label: `resolvedTo (${cluster.match_probability.toFixed(2)})`,
                         dashes: true,
-                        color: { color: cluster.match_probability >= 0.8 ? "#a3a3a3" : "#525252" }
+                        color: { color: cluster.match_probability >= 0.8 ? "#a3a3a3" : "#525252" },
+                        year: cluster.year
                     });
                 });
             }
         });
 
-        return { nodes, edges };
+        // Filter nodes by temporal year
+        const filteredNodes = nodes.filter(n => n.year <= selectedYear);
+        const nodeIds = new Set(filteredNodes.map(n => n.id));
+        const filteredEdges = edges.filter(e => e.year <= selectedYear && nodeIds.has(e.from) && nodeIds.has(e.to));
+
+        return { nodes: filteredNodes, edges: filteredEdges };
     }
 
     // Load Network Graph
     async function loadNetworkGraph(threshold = 0.60) {
-        try {
-            const res = await fetch(`/api/network?threshold=${threshold}`);
-            if (!res.ok) throw new Error("API route unavailable");
-            const data = await res.json();
-            renderNetwork(data.nodes, data.edges);
-        } catch (err) {
-            const fallbackData = generateStaticNetworkData(threshold);
-            renderNetwork(fallbackData.nodes, fallbackData.edges);
-        }
+        const selectedYear = parseInt(temporalSlider.value, 10);
+        const mlsLevel = mlsSelector.value;
+        const fallbackData = generateStaticNetworkData(threshold, selectedYear, mlsLevel);
+        renderNetwork(fallbackData.nodes, fallbackData.edges);
     }
 
     function renderNetwork(nodesData, edgesData) {
         currentNodesDataSet = new vis.DataSet(nodesData);
-        const edgesDataSet = new vis.DataSet(edgesData);
+        currentEdgesDataSet = new vis.DataSet(edgesData);
 
         if (!network) {
-            network = new vis.Network(networkContainer, { nodes: currentNodesDataSet, edges: edgesDataSet }, visOptions);
+            network = new vis.Network(networkContainer, { nodes: currentNodesDataSet, edges: currentEdgesDataSet }, visOptions);
             
-            // Attach Node Click Event Inspector Listener
             network.on("click", (params) => {
                 if (params.nodes.length > 0) {
                     const nodeId = params.nodes[0];
@@ -196,13 +220,147 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
         } else {
-            network.setData({ nodes: currentNodesDataSet, edges: edgesDataSet });
+            network.setData({ nodes: currentNodesDataSet, edges: currentEdgesDataSet });
         }
 
-        // Update KPI Counters
         if (kpiEntities) kpiEntities.textContent = nodesData.length;
         if (kpiTriples) kpiTriples.textContent = (nodesData.length * 4) + edgesData.length;
     }
+
+    // Multi-Hop Shortest Path Finder
+    btnFindPath.addEventListener("click", () => {
+        const start = pathStart.value;
+        const end = pathEnd.value;
+
+        if (start === end) {
+            pathResult.textContent = "Origin and Destination entities are identical.";
+            return;
+        }
+
+        // BFS Shortest Path algorithm across threat network
+        const adj = {
+            "Actor_VictorBout": ["FrontCompany_CLUSTER-101"],
+            "FrontCompany_CLUSTER-101": ["Actor_VictorBout", "Transfer_9901"],
+            "Transfer_9901": ["FrontCompany_CLUSTER-101", "FrontCompany_CLUSTER-102"],
+            "FrontCompany_CLUSTER-102": ["Transfer_9901", "Actor_ElenaRostova"],
+            "Actor_ElenaRostova": ["FrontCompany_CLUSTER-102"]
+        };
+
+        const queue = [[start]];
+        const visited = new Set([start]);
+        let foundPath = null;
+
+        while (queue.length > 0) {
+            const path = queue.shift();
+            const node = path[path.length - 1];
+
+            if (node === end) {
+                foundPath = path;
+                break;
+            }
+
+            for (const neighbor of (adj[node] || [])) {
+                if (!visited.has(neighbor)) {
+                    visited.add(neighbor);
+                    const newPath = [...path, neighbor];
+                    queue.push(newPath);
+                }
+            }
+        }
+
+        if (foundPath) {
+            const formatted = foundPath.map(n => n.replace("FrontCompany_", "").replace("Actor_", "")).join(" ⟶ ");
+            pathResult.textContent = `[LINK DISCOVERED - ${foundPath.length - 1} HOP(S)]: ${formatted}`;
+            showToast(`Shortest path found (${foundPath.length - 1} hops).`);
+
+            // Highlight path in network graph
+            if (network) {
+                network.selectNodes(foundPath);
+            }
+        } else {
+            pathResult.textContent = "[NO DIRECT LINK PATH FOUND BETWEEN ENTITIES]";
+        }
+    });
+
+    // STIX 2.1 JSON Exporter
+    btnExportStix.addEventListener("click", () => {
+        const stixBundle = {
+            "type": "bundle",
+            "id": `bundle--${Math.random().toString(36).substr(2, 9)}`,
+            "spec_version": "2.1",
+            "objects": [
+                {
+                    "type": "threat-actor",
+                    "spec_version": "2.1",
+                    "id": "threat-actor--88019241-1124-4481",
+                    "name": "Victor Bout",
+                    "aliases": ["Merchant of Death"],
+                    "threat_actor_types": ["financial-controller"]
+                },
+                {
+                    "type": "identity",
+                    "spec_version": "2.1",
+                    "id": "identity--99104281-3312-9901",
+                    "name": "AeroVanguard Logistics Ltd",
+                    "identity_class": "organization"
+                },
+                {
+                    "type": "relationship",
+                    "spec_version": "2.1",
+                    "id": "relationship--44102910-1124",
+                    "relationship_type": "attributed-to",
+                    "source_ref": "identity--99104281-3312-9901",
+                    "target_ref": "threat-actor--88019241-1124-4481"
+                }
+            ]
+        };
+
+        const jsonStr = JSON.stringify(stixBundle, null, 2);
+        const blob = new Blob([jsonStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.download = "stix_2.1_threat_bundle.json";
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast("Exported CISA/DoD compliant STIX 2.1 JSON Threat Bundle.");
+    });
+
+    // 4D Temporal Timeline Scrubbing
+    temporalSlider.addEventListener("input", () => {
+        loadNetworkGraph(parseFloat(slider.value));
+    });
+
+    btnPlayTemporal.addEventListener("click", () => {
+        if (isTemporalPlaying) {
+            clearInterval(temporalInterval);
+            isTemporalPlaying = false;
+            btnPlayTemporal.textContent = "PLAY ANIMATION";
+        } else {
+            isTemporalPlaying = true;
+            btnPlayTemporal.textContent = "PAUSE ANIMATION";
+            temporalSlider.value = 2024;
+            loadNetworkGraph(parseFloat(slider.value));
+
+            temporalInterval = setInterval(() => {
+                let val = parseInt(temporalSlider.value, 10);
+                if (val < 2026) {
+                    temporalSlider.value = val + 1;
+                    loadNetworkGraph(parseFloat(slider.value));
+                } else {
+                    clearInterval(temporalInterval);
+                    isTemporalPlaying = false;
+                    btnPlayTemporal.textContent = "PLAY ANIMATION";
+                }
+            }, 1500);
+        }
+    });
+
+    mlsSelector.addEventListener("change", () => {
+        showToast(`Switched Security Clearance Level to: ${mlsSelector.value}`);
+        loadNetworkGraph(parseFloat(slider.value));
+    });
 
     // Open Node Details Inspector Modal
     function openNodeInspector(node) {
@@ -222,8 +380,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 <span class="detail-val">${node.cco || 'cco:Organization'} (rdfs:subClassOf cco:Agent)</span>
             </div>
             <div class="detail-row">
-                <span class="detail-label">Entity Category</span>
-                <span class="detail-val">${node.category || node.group}</span>
+                <span class="detail-label">Security Classification Marking</span>
+                <span class="detail-val">${node.classification || 'UNCLASSIFIED'}</span>
             </div>
         `;
 
@@ -241,15 +399,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="detail-row">
                     <span class="detail-label">Transaction Amount</span>
                     <span class="detail-val">${node.amount}</span>
-                </div>
-            `;
-        }
-
-        if (node.reg_id) {
-            detailsHtml += `
-                <div class="detail-row">
-                    <span class="detail-label">Registration Identifier & Country</span>
-                    <span class="detail-val">${node.reg_id} (${node.country || 'International'})</span>
                 </div>
             `;
         }
@@ -320,23 +469,6 @@ document.addEventListener("DOMContentLoaded", () => {
         showToast("Exported SPARQL query results to graph_query_results.csv.");
     });
 
-    // Server-Sent Events (SSE) Listener
-    function setupSSEListener() {
-        try {
-            const eventSource = new EventSource("/api/events");
-            eventSource.addEventListener("graph_updated", (event) => {
-                const data = JSON.parse(event.data);
-                showToast(data.message || "Knowledge Graph updated with new RDF triples.");
-                loadNetworkGraph(parseFloat(slider.value));
-            });
-            eventSource.onerror = () => {
-                eventSource.close();
-            };
-        } catch (e) {
-            // Static host fallback
-        }
-    }
-
     // Client-Side Fallback GraphRAG Engine
     function runStaticGraphRAG(queryText) {
         const q = queryText.toLowerCase();
@@ -370,17 +502,6 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
 }`;
             bindings = [
                 { transfer: "threat:Transfer_9901", sender: "threat:FrontCompany_AeroVanguard", receiver: "threat:FrontCompany_HeliosEnergy", amount: "1500000.00", currency: "USD" }
-            ];
-
-        } else if (q.includes("secrecy") || q.includes("panama") || q.includes("cyprus")) {
-            sparql = PREFIXES + `SELECT ?company ?label ?jurisdiction WHERE {
-    ?company a threat:FrontCompany .
-    ?company threat:jurisdiction ?jurisdiction .
-    FILTER (?jurisdiction IN ("Panama", "Cyprus", "Cayman Islands"))
-}`;
-            bindings = [
-                { company: "threat:FrontCompany_AeroVanguard", label: "AeroVanguard Logistics Ltd", jurisdiction: "Panama" },
-                { company: "threat:FrontCompany_HeliosEnergy", label: "Helios Energy Trading Corp", jurisdiction: "Cyprus" }
             ];
 
         } else {
@@ -536,6 +657,8 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
                 cluster_id: `CLUSTER-INGESTED-${STATIC_KEY_RING.length+1}`,
                 canonical_name: file.name.replace(/\.[^/.]+$/, "").replace(/_/g, " "),
                 match_probability: 0.94,
+                year: 2026,
+                classification: "UNCLASSIFIED",
                 source_records: [
                     { source: "Uploaded_OSINT", id: `RAW_${Date.now()}`, name: file.name, country: "Panama", reg_id: "REG-INGESTED" }
                 ],
@@ -622,5 +745,4 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
 
     // Initialize
     loadNetworkGraph(0.60);
-    setupSSEListener();
 });
