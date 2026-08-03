@@ -92,6 +92,31 @@ body {
     letter-spacing: 0.05em;
 }
 
+.btn-scale-toggle {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.2rem 0.65rem;
+    background: #171717;
+    color: #a3a3a3;
+    border: 1px solid #404040;
+    border-radius: 2px;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: all 0.2s ease;
+}
+
+.btn-scale-toggle:hover {
+    background: #262626;
+    color: #ffffff;
+}
+
+.btn-scale-toggle.active {
+    background: #ffffff;
+    color: #000000;
+    border-color: #ffffff;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+}
+
 /* Sleek Compact KPI Summary Statistics Bar */
 .kpi-bar {
     display: flex;
