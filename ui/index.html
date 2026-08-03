@@ -11,7 +11,7 @@
     <!-- Vis.js Network -->
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="style.css?v=6">
+    <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
     <!-- Security Classification Banner -->
@@ -29,7 +29,7 @@
             <div class="badge-group">
                 <span class="status-badge">BFO / CCO OWL2</span>
                 <span class="status-badge">STIX 2.1 CTI</span>
-                <span class="status-badge">GRAPHRAG NLI</span>
+                <button id="btn-scale-toggle" class="btn-scale-toggle">ENTERPRISE SCALE: OFF (87 TRIPLES)</button>
                 <button id="btn-export-stix" class="btn-primary">EXPORT STIX 2.1</button>
             </div>
         </header>
@@ -49,6 +49,11 @@
             <div class="kpi-item">
                 <span class="kpi-label">RDF TRIPLES</span>
                 <span id="kpi-triples" class="kpi-value">87</span>
+            </div>
+            <div class="kpi-divider"></div>
+            <div class="kpi-item">
+                <span class="kpi-label">SPARQL LATENCY</span>
+                <span id="kpi-latency" class="kpi-value">&lt; 12ms</span>
             </div>
             <div class="kpi-divider"></div>
             <div class="kpi-item">
@@ -187,6 +192,6 @@
     <!-- Notification Toast Container -->
     <div id="toast-container" class="toast-container"></div>
 
-    <script src="app.js?v=6"></script>
+    <script src="app.js?v=7"></script>
 </body>
 </html>
