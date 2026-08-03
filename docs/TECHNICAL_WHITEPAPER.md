@@ -1,13 +1,13 @@
 # Technical Architecture Briefing - Threat Intelligence OSINT Platform
-**Prepared for**: Johns Hopkins University Applied Physics Laboratory (JHU/APL)  
-**Classification**: UNCLASSIFIED // FOR OFFICIAL USE ONLY (FOUO)  
+**Edition**: Demonstration Edition (Notional Data)  
+**Classification**: UNCLASSIFIED // DEMONSTRATION EDITION (NOTIONAL DATA)  
 **Standard Compliance**: BFO 2020 / CCO v1.4 / STIX 2.1 / W3C OWL2 / SPARQL 1.1  
 
 ---
 
-## 1. Executive Summary & Defense Architecture
+## 1. Executive Summary & Architecture Overview
 
-The Threat Intelligence OSINT Platform is an enterprise-grade multi-agent software architecture engineered for real-time defense intelligence, counter-proliferation tracking, and cyber threat network discovery. The system combines formal ontology modeling, probabilistic identity resolution, event-driven streaming ingestion, and zero-hallucination GraphRAG question answering.
+The Threat Intelligence OSINT Platform is an enterprise-grade multi-agent software architecture engineered for real-time threat intelligence, counter-proliferation tracking, and cyber threat network discovery. The system combines formal ontology modeling, probabilistic identity resolution, event-driven streaming ingestion, and zero-hallucination GraphRAG question answering.
 
 ```
                          [ OSINT / OFAC / STIX Intel Feed ]
@@ -25,14 +25,14 @@ The Threat Intelligence OSINT Platform is an enterprise-grade multi-agent softwa
                     ┌────────────────────┴────────────────────┐
                     ▼                                         ▼
      [ GraphRAG NLI Reasoning Engine ]             [ STIX 2.1 / TAXII Exporter ]
-      (SPARQL AST + Entailment Proof)              (CISA/DoD Standard Sharing)
+      (SPARQL AST + Entailment Proof)              (Standard CTI Sharing)
 ```
 
 ---
 
 ## 2. Formal Upper Ontology Engineering (BFO & CCO Alignment)
 
-The domain model extends the **Basic Formal Ontology (BFO)** and **Common Core Ontologies (CCO)** to establish semantic interoperability across defense coalition networks.
+The domain model extends the **Basic Formal Ontology (BFO)** and **Common Core Ontologies (CCO)** to establish semantic interoperability across defense coalition networks using non-proprietary, open standards.
 
 ### 2.1 Taxonomy & Class Hierarchy
 
@@ -85,7 +85,7 @@ Pairs exceeding match probability threshold $P(M | \gamma) \ge 0.60$ are cluster
 
 ## 4. GraphRAG NLI Entailment Proof & Zero-Hallucination Engine
 
-To eliminate LLM hallucinations in national security environments, natural language queries are deterministically translated into SPARQL 1.1 queries executed against the Turtle RDF graph. Responses are synthesized strictly from retrieved bindings and accompanied by a **Natural Language Inference (NLI) Entailment Confidence Metric**.
+To eliminate LLM hallucinations in security environments, natural language queries are deterministically translated into SPARQL 1.1 queries executed against the Turtle RDF graph. Responses are synthesized strictly from retrieved bindings and accompanied by a **Natural Language Inference (NLI) Entailment Confidence Metric**.
 
 ### 4.1 Entailment Proof Formulation
 
