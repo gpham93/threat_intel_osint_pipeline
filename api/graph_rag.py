@@ -204,10 +204,16 @@ SELECT ?s ?p ?o WHERE {
         }
 
 
-def query_threat_graph(natural_language_query: str, turtle_path: str = "../ontology/threat_model.ttl") -> Dict[str, Any]:
+def query_threat_graph(natural_language_query: str, turtle_path: str = None) -> Dict[str, Any]:
     """
     Convenience function wrapper for querying the Threat Intelligence GraphRAG module.
     """
+    if turtle_path is None:
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        large_path = os.path.join(current_dir, "..", "ontology", "threat_model_large.ttl")
+        base_path = os.path.join(current_dir, "..", "ontology", "threat_model.ttl")
+        turtle_path = large_path if os.path.exists(large_path) else base_path
+
     engine = GraphRAGQueryEngine(turtle_path=turtle_path)
     return engine.query_threat_graph(natural_language_query)
 
