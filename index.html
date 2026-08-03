@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Threat Intelligence OSINT Analyst Platform</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Vis.js Network -->
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="/ui/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header Bar -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-text">THREAT INTEL OSINT</div>
+                <div class="subtitle-text">Analyst Conversational Platform | GraphRAG Reasoning Engine</div>
+            </div>
+            <div class="badge-group">
+                <span class="status-badge">BFO / CCO OWL2</span>
+                <span class="status-badge">SPLINK PYSPARK</span>
+                <span class="status-badge">GRAPHRAG NLI</span>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="workspace-grid">
+            <!-- Left Panel: Conversational Analyst Chat Interface -->
+            <section class="chat-section card">
+                <div class="card-header">
+                    <h2>Conversational Analyst Interface</h2>
+                    <span class="badge-status">SYSTEM ACTIVE</span>
+                </div>
+
+                <!-- Chat History Feed -->
+                <div id="chat-feed" class="chat-feed">
+                    <div class="chat-message message-system">
+                        <div class="message-meta">SYSTEM ASSISTANT</div>
+                        <div class="message-body">
+                            Threat Intelligence GraphRAG Engine initialized. Enter natural language queries to investigate threat actors, front companies, and money transfers. Every response includes a Reasoning Trace detailing generated SPARQL, raw RDF triples, and NLI verification confidence.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Query Input Form -->
+                <div class="chat-input-area">
+                    <div class="preset-row">
+                        <span class="preset-label">Suggested Prompts:</span>
+                        <button class="btn-preset" data-query="Show me all money transfers over $10k linked to Front Company A">Transfers > $10k</button>
+                        <button class="btn-preset" data-query="Find all front companies and their sanction identifiers">Front Companies</button>
+                        <button class="btn-preset" data-query="Which threat actors are associated with front companies?">Threat Actors</button>
+                    </div>
+                    <div class="input-form">
+                        <input type="text" id="chat-input" placeholder="Type an analyst query (e.g. Show me all money transfers over $10k linked to Front Company A)..." autocomplete="off">
+                        <button id="btn-send" class="btn-primary">SUBMIT QUERY</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel: Threat Network Explorer & Upload Zone -->
+            <aside class="side-section">
+                <!-- Drag and Drop Upload Zone -->
+                <div class="card upload-card">
+                    <div class="card-header">
+                        <h2>Ingestion Pipeline</h2>
+                        <span class="badge-status">REAL-TIME</span>
+                    </div>
+                    <div id="dropzone" class="dropzone-area">
+                        <div class="dropzone-text">
+                            <strong>Drop Raw Intel File Here</strong> or <span class="browse-link">Browse</span>
+                            <p class="dropzone-sub">Formats: CSV, TXT, PDF (OFAC / OSINT reports)</p>
+                        </div>
+                        <input type="file" id="file-input" style="display: none;" accept=".csv,.txt,.pdf">
+                    </div>
+                </div>
+
+                <!-- Identity Resolution Slider -->
+                <div class="card control-card">
+                    <div class="card-header">
+                        <h2>Identity Resolution Cutoff</h2>
+                        <span class="badge-threshold">Score: <strong id="threshold-val">0.60</strong></span>
+                    </div>
+                    <div class="slider-container">
+                        <input type="range" id="threshold-slider" min="0.0" max="1.0" step="0.05" value="0.60">
+                        <div class="slider-labels">
+                            <span>0.0 (Loose)</span>
+                            <span>0.5 (Default)</span>
+                            <span>1.0 (Strict)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Threat Network Graph Visualization -->
+                <div class="card graph-card">
+                    <div class="card-header">
+                        <h2>Threat Network Graph</h2>
+                    </div>
+                    <div id="network-canvas"></div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="/ui/app.js"></script>
+</body>
+</html>
