@@ -1,0 +1,137 @@
+@prefix bfo: <http://purl.obolibrary.org/obo/> .
+@prefix cco: <http://www.ontologyrepository.com/CommonCoreOntologies/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix threat: <http://example.org/threat#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://example.org/threat> a owl:Ontology ;
+    rdfs:label "Threat Network Ontology" ;
+    rdfs:comment "Strict OWL2 Ontology representing a threat intelligence network importing BFO and CCO namespaces." ;
+    owl:imports bfo:bfo.owl,
+        cco:UpperOntology .
+
+threat:Actor_AlexanderPetrov a threat:ThreatActor ;
+    rdfs:label "Alexander Petrov" ;
+    threat:associatedWith threat:FrontCompany_Ingested_KY_99104 .
+
+threat:Actor_DmitryVolkov a threat:ThreatActor ;
+    rdfs:label "Dmitry Volkov" ;
+    threat:associatedWith threat:FrontCompany_Ingested_MH_88120 .
+
+threat:Actor_ElenaRostova a threat:ThreatActor ;
+    rdfs:label "Elena Rostova" ;
+    threat:associatedWith threat:FrontCompany_HeliosEnergy,
+        threat:FrontCompany_Ingested_CY_99412,
+        threat:FrontCompany_Ingested_REG_88201 .
+
+threat:Actor_VictorBout a threat:ThreatActor ;
+    rdfs:label "Victor Bout" ;
+    threat:aliasName "Merchant of Death" ;
+    threat:associatedWith threat:FrontCompany_AeroVanguard,
+        threat:FrontCompany_Ingested_MH_44910,
+        threat:FrontCompany_Ingested_REG_88201 .
+
+threat:Transfer_9901 a threat:MoneyTransfer ;
+    threat:hasAmount 1500000.0 ;
+    threat:hasCurrency "USD" ;
+    threat:has_receiver threat:FrontCompany_HeliosEnergy ;
+    threat:has_sender threat:FrontCompany_AeroVanguard .
+
+threat:aliasName a owl:DatatypeProperty ;
+    rdfs:domain cco:Person ;
+    rdfs:range xsd:string .
+
+threat:associatedWith a owl:ObjectProperty ;
+    rdfs:label "associated with" ;
+    rdfs:domain threat:ThreatActor ;
+    rdfs:range threat:FrontCompany .
+
+threat:hasAmount a owl:DatatypeProperty ;
+    rdfs:domain threat:MoneyTransfer ;
+    rdfs:range xsd:decimal .
+
+threat:hasCurrency a owl:DatatypeProperty ;
+    rdfs:domain threat:MoneyTransfer ;
+    rdfs:range xsd:string .
+
+threat:has_receiver a owl:ObjectProperty ;
+    rdfs:label "has receiver" ;
+    rdfs:subPropertyOf threat:has_agent .
+
+threat:has_sender a owl:ObjectProperty ;
+    rdfs:label "has sender" ;
+    rdfs:subPropertyOf threat:has_agent .
+
+threat:sanctionID a owl:DatatypeProperty ;
+    rdfs:domain cco:Organization ;
+    rdfs:range xsd:string .
+
+threat:FrontCompany_Ingested_CY_99412 a threat:FrontCompany ;
+    rdfs:label "Nexus Global Holdings Corp" ;
+    threat:sanctionID "CY-99412" .
+
+threat:FrontCompany_Ingested_KY_99104 a threat:FrontCompany ;
+    rdfs:label "Krypton Maritime Operations Ltd" ;
+    threat:sanctionID "KY-99104" .
+
+threat:FrontCompany_Ingested_MH_44910 a threat:FrontCompany ;
+    rdfs:label "Zephyr Maritime Shipping Corp" ;
+    threat:sanctionID "MH-44910" .
+
+threat:FrontCompany_Ingested_MH_88120 a threat:FrontCompany ;
+    rdfs:label "Vanguard Transoceanic Logistics" ;
+    threat:sanctionID "MH-88120" .
+
+cco:has_agent a owl:ObjectProperty .
+
+threat:FrontCompany_AeroVanguard a threat:FrontCompany ;
+    rdfs:label "AeroVanguard Logistics Ltd" ;
+    threat:sanctionID "OFAC-2026-8812" .
+
+threat:FrontCompany_HeliosEnergy a threat:FrontCompany ;
+    rdfs:label "Helios Energy Trading Corp" .
+
+threat:FrontCompany_Ingested_REG_88201 a threat:FrontCompany ;
+    rdfs:label "AeroVanguard Logistics Ltd",
+        "Orion Defense Logistics LLC" ;
+    threat:sanctionID "REG-88201" .
+
+cco:ActOfCommerce a owl:Class ;
+    rdfs:subClassOf [ a owl:Restriction ;
+            owl:onProperty threat:has_agent ;
+            owl:someValuesFrom [ a owl:Class ;
+                    owl:unionOf ( cco:Person cco:Organization ) ] ] .
+
+threat:MoneyTransfer a owl:Class ;
+    rdfs:label "Money Transfer" ;
+    rdfs:comment "An act of commerce involving monetary transaction between threat network entities." ;
+    rdfs:subClassOf [ a owl:Restriction ;
+            owl:onProperty threat:has_agent ;
+            owl:someValuesFrom [ a owl:Class ;
+                    owl:unionOf ( cco:Person cco:Organization ) ] ],
+        cco:ActOfCommerce .
+
+threat:has_agent a owl:ObjectProperty ;
+    rdfs:label "has agent" ;
+    rdfs:comment "Relates an act (such as ActOfCommerce or MoneyTransfer) to an agent (Person or Organization)." ;
+    rdfs:domain cco:ActOfCommerce ;
+    rdfs:range [ a owl:Class ;
+            owl:unionOf ( cco:Person cco:Organization ) ] ;
+    rdfs:subPropertyOf cco:has_agent .
+
+threat:ThreatActor a owl:Class ;
+    rdfs:label "Threat Actor" ;
+    rdfs:comment "An individual person identified as a threat actor or malicious agent." ;
+    rdfs:subClassOf cco:Person .
+
+cco:Organization a owl:Class .
+
+cco:Person a owl:Class .
+
+threat:FrontCompany a owl:Class ;
+    rdfs:label "Front Company" ;
+    rdfs:comment "An organization acting as a shell or front company for illicit activities." ;
+    rdfs:subClassOf cco:Organization .
+

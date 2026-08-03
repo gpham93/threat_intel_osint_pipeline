@@ -1,0 +1,26 @@
+DEPARTMENT OF THE TREASURY - OFAC SPECIAL ADVISORY
+CLASSIFICATION: UNCLASSIFIED / FOR OFFICIAL USE ONLY
+DATE: AUGUST 2026
+
+SUBJECT: IDENTIFICATION OF ILLICIT FRONT COMPANIES AND THREAT NETWORK AGENTS
+
+1. TARGET ENTITY DETAILS:
+   - Entity Name: Zenith Offshore Holdings Inc
+   - Jurisdiction: British Virgin Islands (BVI)
+   - Registration Number: BVI-77401
+   - Operating Address: Road Town, Tortola, British Virgin Islands
+
+2. ASSOCIATED THREAT ACTOR:
+   - Individual: Dmitry Volkov
+   - Alias: "Operator Red"
+   - Role: Principal Beneficiary & Financial Controller
+
+3. FINANCIAL NEXUS & MONEY LAUNDERING TRANSACTIONS:
+   - Wire Transfer ID: TXN-BVI-99201
+   - Amount: $4,200,000.00 USD
+   - Originating Account: Zenith Offshore Holdings Inc (BVI-77401)
+   - Beneficiary Account: Helios Energy Trading Corp (CY-99412)
+   - Clearing Agent: AeroVanguard Logistics Ltd (REG-88201)
+
+4. COMPLIANCE MANDATE:
+   - Financial institutions are advised to immediately freeze all assets linked to Zenith Offshore Holdings Inc and associated shell entities.

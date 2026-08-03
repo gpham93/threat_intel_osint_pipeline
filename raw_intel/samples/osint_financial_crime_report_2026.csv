@@ -1,0 +1,5 @@
+unique_id,company_name,country,registration_id,address,associated_actor,risk_level,sanction_flag
+OSINT_301,AeroVanguard Logistics Ltd,Panama,REG-88201,Calle 50 Panama City,Victor Bout,HIGH,YES
+OSINT_302,Krypton Maritime Operations Ltd,Cayman Islands,KY-99104,George Town Grand Cayman,Alexander Petrov,CRITICAL,YES
+OSINT_303,Nexus Global Holdings Corp,Cyprus,CY-99412,Nicosia Cyprus,Elena Rostova,HIGH,YES
+OSINT_304,Vanguard Transoceanic Logistics,Marshall Islands,MH-88120,Majuro Marshall Islands,Dmitry Volkov,MEDIUM,NO

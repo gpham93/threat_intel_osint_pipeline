@@ -1,0 +1,22 @@
+# Python / PySpark ignore
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.env
+
+# MacOS files
+.DS_Store
+
+# IDE / Editor files
+.vscode/
+.idea/
+
+# PySpark / Splink logs
+metastore_db/
+derby.log
+spark-warehouse/
