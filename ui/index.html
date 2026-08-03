@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Threat Intelligence OSINT Analyst Platform</title>
+    <title>Threat Intelligence OSINT Platform - JHU/APL Defense Edition</title>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,20 +11,26 @@
     <!-- Vis.js Network -->
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
+    <!-- DoD Security Classification Banner -->
+    <div class="mls-banner">
+        UNCLASSIFIED // FOR OFFICIAL USE ONLY (FOUO) - JHU/APL DEFENSE EDITION
+    </div>
+
     <div class="app-container">
         <!-- Header Bar -->
         <header class="app-header">
             <div class="logo-area">
                 <div class="logo-text">THREAT INTEL OSINT</div>
-                <div class="subtitle-text">Analyst Conversational Platform | GraphRAG Reasoning Engine</div>
+                <div class="subtitle-text">JHU/APL Defense Edition | BFO/CCO Ontology & STIX 2.1 CTI Engine</div>
             </div>
             <div class="badge-group">
                 <span class="status-badge">BFO / CCO OWL2</span>
-                <span class="status-badge">SPLINK PYSPARK</span>
+                <span class="status-badge">STIX 2.1 CTI</span>
                 <span class="status-badge">GRAPHRAG NLI</span>
+                <button id="btn-export-stix" class="btn-primary">EXPORT STIX 2.1</button>
             </div>
         </header>
 
@@ -49,6 +55,36 @@
                 <span class="kpi-label">NLI CONFIDENCE AVG</span>
                 <span id="kpi-nli" class="kpi-value">99.4%</span>
             </div>
+            <div class="kpi-divider"></div>
+            <div class="kpi-item">
+                <span class="kpi-label">SECURITY CLEARANCE</span>
+                <select id="mls-selector" class="mls-select">
+                    <option value="UNCLASSIFIED">UNCLASSIFIED</option>
+                    <option value="SECRET">SECRET // NOFORN</option>
+                    <option value="TOPSECRET">TOP SECRET // SI/TK</option>
+                </select>
+            </div>
+        </section>
+
+        <!-- Link Analysis Pathfinder Bar -->
+        <section class="pathfinder-bar card">
+            <div class="pathfinder-controls">
+                <span class="pathfinder-title">Multi-Hop Link Pathfinder:</span>
+                <select id="path-start" class="path-select">
+                    <option value="Actor_VictorBout">Victor Bout (Threat Actor)</option>
+                    <option value="Actor_ElenaRostova">Elena Rostova (Threat Actor)</option>
+                    <option value="Transfer_9901">Transfer $1.5M (ActOfCommerce)</option>
+                    <option value="FrontCompany_CLUSTER-101">AeroVanguard Logistics (Organization)</option>
+                </select>
+                <span class="pathfinder-arrow">⟶</span>
+                <select id="path-end" class="path-select">
+                    <option value="Actor_ElenaRostova">Elena Rostova (Threat Actor)</option>
+                    <option value="Actor_VictorBout">Victor Bout (Threat Actor)</option>
+                    <option value="FrontCompany_CLUSTER-102">Helios Energy Trading (Organization)</option>
+                </select>
+                <button id="btn-find-path" class="btn-secondary">FIND SHORTEST LINK PATH</button>
+            </div>
+            <div id="path-result" class="path-result-text">Select origin and destination entities to calculate multi-hop link path...</div>
         </section>
 
         <!-- Main Workspace -->
@@ -68,7 +104,7 @@
                     <div class="chat-message message-system">
                         <div class="message-meta">SYSTEM ASSISTANT</div>
                         <div class="message-body">
-                            Threat Intelligence GraphRAG Engine initialized. Enter natural language queries to investigate threat actors, front companies, and money transfers. Every response includes a Reasoning Trace detailing generated SPARQL, raw RDF triples, and NLI verification confidence. Click any graph node to inspect ontology details.
+                            JHU/APL Defense Edition GraphRAG Engine initialized. STIX 2.1 CTI translation and BFO/CCO formal ontology loaded. Enter natural language prompts or use the link pathfinder below. Every response includes a Reasoning Trace detailing generated SPARQL, raw RDF triples, and NLI verification confidence.
                         </div>
                     </div>
                 </div>
@@ -103,6 +139,22 @@
                             <p class="dropzone-sub">Formats: CSV, TXT, PDF (OFAC / OSINT reports)</p>
                         </div>
                         <input type="file" id="file-input" style="display: none;" accept=".csv,.txt,.pdf">
+                    </div>
+                </div>
+
+                <!-- 4D Temporal Timeline Scrubbing Bar -->
+                <div class="card temporal-card">
+                    <div class="card-header">
+                        <h2>4D Temporal Network Timeline</h2>
+                        <button id="btn-play-temporal" class="btn-secondary">PLAY ANIMATION</button>
+                    </div>
+                    <div class="temporal-controls">
+                        <input type="range" id="temporal-slider" min="2024" max="2026" step="1" value="2026">
+                        <div class="slider-labels">
+                            <span>2024 (Baseline)</span>
+                            <span>2025 (Expansion)</span>
+                            <span>2026 (Present)</span>
+                        </div>
                     </div>
                 </div>
 
@@ -150,6 +202,6 @@
     <!-- Notification Toast Container -->
     <div id="toast-container" class="toast-container"></div>
 
-    <script src="app.js?v=3"></script>
+    <script src="app.js?v=4"></script>
 </body>
 </html>
