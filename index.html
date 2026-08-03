@@ -11,7 +11,7 @@
     <!-- Vis.js Network -->
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
     <!-- Security Classification Banner -->
@@ -20,7 +20,7 @@
     </div>
 
     <div class="app-container">
-        <!-- Header Bar -->
+        <!-- Compact Header Bar -->
         <header class="app-header">
             <div class="logo-area">
                 <div class="logo-text">THREAT INTEL OSINT</div>
@@ -34,7 +34,7 @@
             </div>
         </header>
 
-        <!-- KPI Intelligence Counters Bar -->
+        <!-- Sleek Compact KPI Summary Statistics Bar -->
         <section class="kpi-bar card">
             <div class="kpi-item">
                 <span class="kpi-label">TOTAL ENTITIES</span>
@@ -66,30 +66,52 @@
             </div>
         </section>
 
-        <!-- Link Analysis Pathfinder Bar -->
-        <section class="pathfinder-bar card">
-            <div class="pathfinder-controls">
-                <span class="pathfinder-title">Multi-Hop Link Pathfinder:</span>
-                <select id="path-start" class="path-select">
-                    <option value="Actor_VictorBout">Victor Bout (Threat Actor)</option>
-                    <option value="Actor_ElenaRostova">Elena Rostova (Threat Actor)</option>
-                    <option value="Transfer_9901">Transfer $1.5M (ActOfCommerce)</option>
-                    <option value="FrontCompany_CLUSTER-101">AeroVanguard Logistics (Organization)</option>
-                </select>
-                <span class="pathfinder-arrow">⟶</span>
-                <select id="path-end" class="path-select">
-                    <option value="Actor_ElenaRostova">Elena Rostova (Threat Actor)</option>
-                    <option value="Actor_VictorBout">Victor Bout (Threat Actor)</option>
-                    <option value="FrontCompany_CLUSTER-102">Helios Energy Trading (Organization)</option>
-                </select>
-                <button id="btn-find-path" class="btn-secondary">FIND SHORTEST LINK PATH</button>
+        <!-- PROMINENT FEATURED THREAT NETWORK GRAPH SECTION (AT TOP) -->
+        <section class="card graph-featured-card">
+            <div class="card-header">
+                <h2>Threat Network Graph Visualizer</h2>
+                <div class="header-actions">
+                    <div class="pathfinder-controls">
+                        <span class="pathfinder-title">Pathfinder:</span>
+                        <select id="path-start" class="path-select">
+                            <option value="Actor_VictorBout">Victor Bout</option>
+                            <option value="Actor_ElenaRostova">Elena Rostova</option>
+                            <option value="Transfer_9901">Transfer $1.5M</option>
+                            <option value="FrontCompany_CLUSTER-101">AeroVanguard Logistics</option>
+                        </select>
+                        <span class="pathfinder-arrow">⟶</span>
+                        <select id="path-end" class="path-select">
+                            <option value="Actor_ElenaRostova">Elena Rostova</option>
+                            <option value="Actor_VictorBout">Victor Bout</option>
+                            <option value="FrontCompany_CLUSTER-102">Helios Energy Trading</option>
+                        </select>
+                        <button id="btn-find-path" class="btn-secondary">FIND PATH</button>
+                    </div>
+                    <button id="btn-export-png" class="btn-secondary">EXPORT GRAPH (PNG)</button>
+                </div>
             </div>
+
+            <!-- Integrated Controls Bar -->
+            <div class="integrated-controls-bar">
+                <div class="control-group">
+                    <span class="control-label">4D Temporal Scrubber:</span>
+                    <input type="range" id="temporal-slider" min="2024" max="2026" step="1" value="2026">
+                    <button id="btn-play-temporal" class="btn-secondary">PLAY</button>
+                </div>
+                <div class="control-divider"></div>
+                <div class="control-group">
+                    <span class="control-label">Identity Cutoff Score: <strong id="threshold-val">0.60</strong></span>
+                    <input type="range" id="threshold-slider" min="0.0" max="1.0" step="0.05" value="0.60">
+                </div>
+            </div>
+
             <div id="path-result" class="path-result-text">Select origin and destination entities to calculate multi-hop link path...</div>
+            <div id="network-canvas"></div>
         </section>
 
-        <!-- Main Workspace -->
-        <main class="workspace-grid">
-            <!-- Left Panel: Conversational Analyst Chat Interface -->
+        <!-- Bottom Grid: Analyst Chat Feed & Ingestion Dropzone -->
+        <main class="bottom-grid">
+            <!-- Left: Conversational Analyst Chat Interface -->
             <section class="chat-section card">
                 <div class="card-header">
                     <h2>Conversational Analyst Interface</h2>
@@ -104,7 +126,7 @@
                     <div class="chat-message message-system">
                         <div class="message-meta">SYSTEM ASSISTANT</div>
                         <div class="message-body">
-                            Enterprise Defense Edition GraphRAG Engine initialized. STIX 2.1 CTI translation and BFO/CCO formal ontology loaded. Enter natural language prompts or use the link pathfinder below. Every response includes a Reasoning Trace detailing generated SPARQL, raw RDF triples, and NLI verification confidence.
+                            Enterprise Defense Edition GraphRAG Engine initialized. Enter natural language prompts below. Every response includes a Reasoning Trace detailing generated SPARQL, raw RDF triples, and NLI verification confidence. Click any graph node to inspect ontology details.
                         </div>
                     </div>
                 </div>
@@ -125,62 +147,25 @@
                 </div>
             </section>
 
-            <!-- Right Panel: Threat Network Explorer & Upload Zone -->
-            <aside class="side-section">
-                <!-- Drag and Drop Upload Zone -->
-                <div class="card upload-card">
-                    <div class="card-header">
-                        <h2>Ingestion Pipeline</h2>
-                        <span class="badge-status">REAL-TIME</span>
-                    </div>
-                    <div id="dropzone" class="dropzone-area">
-                        <div class="dropzone-text">
-                            <strong>Drop Raw Intel File Here</strong> or <span class="browse-link">Browse</span>
-                            <p class="dropzone-sub">Formats: CSV, TXT, PDF (OFAC / OSINT reports)</p>
-                        </div>
-                        <input type="file" id="file-input" style="display: none;" accept=".csv,.txt,.pdf">
-                    </div>
+            <!-- Right: Event-Driven Ingestion Upload Zone -->
+            <aside class="side-section card upload-card">
+                <div class="card-header">
+                    <h2>Event-Driven OSINT Ingestion</h2>
+                    <span class="badge-status">REAL-TIME PIPELINE</span>
                 </div>
-
-                <!-- 4D Temporal Timeline Scrubbing Bar -->
-                <div class="card temporal-card">
-                    <div class="card-header">
-                        <h2>4D Temporal Network Timeline</h2>
-                        <button id="btn-play-temporal" class="btn-secondary">PLAY ANIMATION</button>
+                <div id="dropzone" class="dropzone-area">
+                    <div class="dropzone-text">
+                        <strong>Drop Raw Intel File Here</strong> or <span class="browse-link">Browse</span>
+                        <p class="dropzone-sub">Formats: CSV, TXT, PDF (OFAC / OSINT reports)</p>
                     </div>
-                    <div class="temporal-controls">
-                        <input type="range" id="temporal-slider" min="2024" max="2026" step="1" value="2026">
-                        <div class="slider-labels">
-                            <span>2024 (Baseline)</span>
-                            <span>2025 (Expansion)</span>
-                            <span>2026 (Present)</span>
-                        </div>
-                    </div>
+                    <input type="file" id="file-input" style="display: none;" accept=".csv,.txt,.pdf">
                 </div>
-
-                <!-- Identity Resolution Slider -->
-                <div class="card control-card">
-                    <div class="card-header">
-                        <h2>Identity Resolution Cutoff</h2>
-                        <span class="badge-threshold">Score: <strong id="threshold-val">0.60</strong></span>
+                <div class="sample-download-area">
+                    <span class="sample-title">Download Sample Test Reports:</span>
+                    <div class="sample-buttons">
+                        <a href="https://raw.githubusercontent.com/gpham93/threat_intel_osint_pipeline/main/raw_intel/samples/osint_financial_crime_report_2026.csv" target="_blank" class="btn-sample">Sample CSV Report</a>
+                        <a href="https://raw.githubusercontent.com/gpham93/threat_intel_osint_pipeline/main/raw_intel/samples/ofac_sanctions_advisory_2026.txt" target="_blank" class="btn-sample">Sample TXT Advisory</a>
                     </div>
-                    <div class="slider-container">
-                        <input type="range" id="threshold-slider" min="0.0" max="1.0" step="0.05" value="0.60">
-                        <div class="slider-labels">
-                            <span>0.0 (Loose)</span>
-                            <span>0.5 (Default)</span>
-                            <span>1.0 (Strict)</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Threat Network Graph Visualization -->
-                <div class="card graph-card">
-                    <div class="card-header">
-                        <h2>Threat Network Graph</h2>
-                        <button id="btn-export-png" class="btn-secondary">EXPORT GRAPH (PNG)</button>
-                    </div>
-                    <div id="network-canvas"></div>
                 </div>
             </aside>
         </main>
@@ -202,6 +187,6 @@
     <!-- Notification Toast Container -->
     <div id="toast-container" class="toast-container"></div>
 
-    <script src="app.js?v=5"></script>
+    <script src="app.js?v=6"></script>
 </body>
 </html>
