@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: threat-intel-osint-pipeline
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py 8085
+    envVars:
+      - key: PORT
+        value: 8085
