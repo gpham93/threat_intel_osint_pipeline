@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Threat Intelligence OSINT Platform - Demonstration Edition</title>
+    <title>Threat Intelligence OSINT Platform - Refactoring UI Edition</title>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,7 +11,7 @@
     <!-- Vis.js Network -->
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="style.css?v=8">
+    <link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
     <!-- Security Classification Banner -->
@@ -34,143 +34,177 @@
             </div>
         </header>
 
-        <!-- Sleek Compact KPI Summary Statistics Bar -->
-        <section class="kpi-bar card">
-            <div class="kpi-item">
-                <span class="kpi-label">TOTAL ENTITIES</span>
-                <span id="kpi-entities" class="kpi-value">6</span>
-            </div>
-            <div class="kpi-divider"></div>
-            <div class="kpi-item">
-                <span class="kpi-label">MONITORED VOLUME</span>
-                <span id="kpi-volume" class="kpi-value">$1,500,000</span>
-            </div>
-            <div class="kpi-divider"></div>
-            <div class="kpi-item">
-                <span class="kpi-label">RDF TRIPLES</span>
-                <span id="kpi-triples" class="kpi-value">87</span>
-            </div>
-            <div class="kpi-divider"></div>
-            <div class="kpi-item">
-                <span class="kpi-label">SPARQL LATENCY</span>
-                <span id="kpi-latency" class="kpi-value">&lt; 12ms</span>
-            </div>
-            <div class="kpi-divider"></div>
-            <div class="kpi-item">
-                <span class="kpi-label">NLI CONFIDENCE AVG</span>
-                <span id="kpi-nli" class="kpi-value">99.4%</span>
-            </div>
-            <div class="kpi-divider"></div>
-            <div class="kpi-item">
-                <span class="kpi-label">SECURITY CLEARANCE</span>
-                <select id="mls-selector" class="mls-select">
-                    <option value="UNCLASSIFIED">UNCLASSIFIED</option>
-                    <option value="SECRET">SECRET // NOFORN</option>
-                    <option value="TOPSECRET">TOP SECRET // SI/TK</option>
-                </select>
-            </div>
-        </section>
-
-        <!-- PROMINENT FEATURED THREAT NETWORK GRAPH SECTION (AT TOP) -->
-        <section class="card graph-featured-card">
-            <div class="card-header">
-                <h2>Threat Network Graph Visualizer</h2>
-                <div class="header-actions">
-                    <div class="pathfinder-controls">
-                        <span class="pathfinder-title">Pathfinder:</span>
-                        <select id="path-start" class="path-select">
-                            <option value="Actor_VictorBout">Victor Bout</option>
-                            <option value="Actor_ElenaRostova">Elena Rostova</option>
-                            <option value="Transfer_9901">Transfer $1.5M</option>
-                            <option value="FrontCompany_CLUSTER-101">AeroVanguard Logistics</option>
-                        </select>
-                        <span class="pathfinder-arrow">⟶</span>
-                        <select id="path-end" class="path-select">
-                            <option value="Actor_ElenaRostova">Elena Rostova</option>
-                            <option value="Actor_VictorBout">Victor Bout</option>
-                            <option value="FrontCompany_CLUSTER-102">Helios Energy Trading</option>
-                        </select>
-                        <button id="btn-find-path" class="btn-secondary">FIND PATH</button>
+        <!-- Refactored Grid Layout (Left Metrics Box, Center Graph & Chat, Top Right Ingestion Uploader) -->
+        <main class="refactored-grid">
+            <!-- Left Sidebar: Metrics Box & Controls -->
+            <aside class="left-sidebar">
+                <!-- Intelligence Overview Metrics Box (Left Column) -->
+                <div class="card metrics-box-card">
+                    <div class="card-header">
+                        <h2>Intelligence Metrics</h2>
+                        <span class="badge-status">LIVE METRICS</span>
                     </div>
-                    <button id="btn-export-png" class="btn-secondary">EXPORT GRAPH (PNG)</button>
-                </div>
-            </div>
-
-            <!-- Integrated Controls Bar -->
-            <div class="integrated-controls-bar">
-                <div class="control-group">
-                    <span class="control-label">4D Temporal Scrubber:</span>
-                    <input type="range" id="temporal-slider" min="2024" max="2026" step="1" value="2026">
-                    <button id="btn-play-temporal" class="btn-secondary">PLAY</button>
-                </div>
-                <div class="control-divider"></div>
-                <div class="control-group">
-                    <span class="control-label">Identity Cutoff Score: <strong id="threshold-val">0.60</strong></span>
-                    <input type="range" id="threshold-slider" min="0.0" max="1.0" step="0.05" value="0.60">
-                </div>
-            </div>
-
-            <div id="path-result" class="path-result-text">Select origin and destination entities to calculate multi-hop link path...</div>
-            <div id="network-canvas"></div>
-        </section>
-
-        <!-- Bottom Grid: Analyst Chat Feed & Ingestion Dropzone -->
-        <main class="bottom-grid">
-            <!-- Left: Conversational Analyst Chat Interface -->
-            <section class="chat-section card">
-                <div class="card-header">
-                    <h2>Conversational Analyst Interface</h2>
-                    <div class="header-actions">
-                        <button id="btn-export-csv" class="btn-secondary">EXPORT RESULTS (CSV)</button>
-                        <span class="badge-status">SYSTEM ACTIVE</span>
-                    </div>
-                </div>
-
-                <!-- Chat History Feed -->
-                <div id="chat-feed" class="chat-feed">
-                    <div class="chat-message message-system">
-                        <div class="message-meta">SYSTEM ASSISTANT</div>
-                        <div class="message-body">
-                            Enterprise Defense Edition GraphRAG Engine initialized. Enter natural language prompts below. Every response includes a Reasoning Trace detailing generated SPARQL, raw RDF triples, and NLI verification confidence. Click any graph node to inspect ontology details.
+                    <div class="metrics-vertical-list">
+                        <div class="metric-block">
+                            <span class="metric-label">TOTAL ENTITIES</span>
+                            <span id="kpi-entities" class="metric-value">6</span>
+                        </div>
+                        <div class="metric-block">
+                            <span class="metric-label">MONITORED VOLUME</span>
+                            <span id="kpi-volume" class="metric-value">$1,500,000</span>
+                        </div>
+                        <div class="metric-block">
+                            <span class="metric-label">RDF TRIPLES</span>
+                            <span id="kpi-triples" class="metric-value">87</span>
+                        </div>
+                        <div class="metric-block">
+                            <span class="metric-label">SPARQL LATENCY</span>
+                            <span id="kpi-latency" class="metric-value">&lt; 12ms</span>
+                        </div>
+                        <div class="metric-block">
+                            <span class="metric-label">NLI CONFIDENCE AVG</span>
+                            <span id="kpi-nli" class="metric-value">99.4%</span>
+                        </div>
+                        <div class="metric-block">
+                            <span class="metric-label">SECURITY CLEARANCE</span>
+                            <select id="mls-selector" class="mls-select">
+                                <option value="UNCLASSIFIED">UNCLASSIFIED</option>
+                                <option value="SECRET">SECRET // NOFORN</option>
+                                <option value="TOPSECRET">TOP SECRET // SI/TK</option>
+                            </select>
                         </div>
                     </div>
                 </div>
 
-                <!-- Query Input Form -->
-                <div class="chat-input-area">
-                    <div class="preset-row">
-                        <span class="preset-label">Suggested Prompts:</span>
-                        <button class="btn-preset" data-query="Show me all money transfers over $10k linked to Front Company A">Transfers > $10k</button>
-                        <button class="btn-preset" data-query="Find all front companies and their sanction identifiers">Front Companies</button>
-                        <button class="btn-preset" data-query="Which threat actors are associated with front companies?">Threat Actors</button>
-                        <button class="btn-preset" data-query="Identify front companies in secrecy jurisdictions (Panama, Cyprus, Cayman Islands)">Secrecy Jurisdictions</button>
+                <!-- Pathfinder & Controls Box -->
+                <div class="card sidebar-controls-card">
+                    <div class="card-header">
+                        <h2>Link Pathfinder</h2>
                     </div>
-                    <div class="input-form">
-                        <input type="text" id="chat-input" placeholder="Type an analyst query (e.g. Show me all money transfers over $10k linked to Front Company A)..." autocomplete="off">
-                        <button id="btn-send" class="btn-primary">SUBMIT QUERY</button>
+                    <div class="pathfinder-vertical-controls">
+                        <div class="select-group">
+                            <label class="control-label">Origin Entity:</label>
+                            <select id="path-start" class="path-select">
+                                <option value="Actor_VictorBout">Victor Bout (Actor)</option>
+                                <option value="Actor_ElenaRostova">Elena Rostova (Actor)</option>
+                                <option value="Transfer_9901">Transfer $1.5M (Transfer)</option>
+                                <option value="FrontCompany_CLUSTER-101">AeroVanguard Logistics</option>
+                            </select>
+                        </div>
+                        <div class="select-group">
+                            <label class="control-label">Destination Entity:</label>
+                            <select id="path-end" class="path-select">
+                                <option value="Actor_ElenaRostova">Elena Rostova (Actor)</option>
+                                <option value="Actor_VictorBout">Victor Bout (Actor)</option>
+                                <option value="FrontCompany_CLUSTER-102">Helios Energy Trading</option>
+                            </select>
+                        </div>
+                        <button id="btn-find-path" class="btn-secondary w-full">FIND SHORTEST PATH</button>
+                        <div id="path-result" class="path-result-text">Select origin and destination entities...</div>
+                    </div>
+                </div>
+
+                <!-- 4D Temporal & Cutoff Controls -->
+                <div class="card sidebar-controls-card">
+                    <div class="card-header">
+                        <h2>Graph Controls</h2>
+                    </div>
+                    <div class="control-vertical-group">
+                        <div class="control-item">
+                            <div class="control-header-row">
+                                <span class="control-label">4D Temporal Scrubber</span>
+                                <button id="btn-play-temporal" class="btn-secondary">PLAY</button>
+                            </div>
+                            <input type="range" id="temporal-slider" min="2024" max="2026" step="1" value="2026">
+                            <div class="slider-labels">
+                                <span>2024</span>
+                                <span>2025</span>
+                                <span>2026</span>
+                            </div>
+                        </div>
+                        <div class="control-item">
+                            <span class="control-label">Identity Cutoff: <strong id="threshold-val">0.60</strong></span>
+                            <input type="range" id="threshold-slider" min="0.0" max="1.0" step="0.05" value="0.60">
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Center Stage: Main Threat Network Graph & Conversational Interface -->
+            <section class="center-stage">
+                <!-- Prominent Threat Network Graph Visualizer -->
+                <div class="card graph-stage-card">
+                    <div class="card-header">
+                        <h2>Threat Network Graph Visualizer</h2>
+                        <button id="btn-export-png" class="btn-secondary">EXPORT GRAPH (PNG)</button>
+                    </div>
+                    <div id="network-canvas"></div>
+                </div>
+
+                <!-- Conversational Analyst Interface -->
+                <div class="card chat-stage-card">
+                    <div class="card-header">
+                        <h2>Conversational Analyst Interface</h2>
+                        <div class="header-actions">
+                            <button id="btn-export-csv" class="btn-secondary">EXPORT RESULTS (CSV)</button>
+                            <span class="badge-status">SYSTEM ACTIVE</span>
+                        </div>
+                    </div>
+
+                    <!-- Chat History Feed -->
+                    <div id="chat-feed" class="chat-feed">
+                        <div class="chat-message message-system">
+                            <div class="message-meta">SYSTEM ASSISTANT</div>
+                            <div class="message-body">
+                                Refactored Defense Edition GraphRAG Engine active. Type any prompt (e.g. "tell me about Titan Maritime Holdings" or "who is Victor Bout"). Every response includes SPARQL, RDF bindings, and NLI verification scores.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Query Input Form -->
+                    <div class="chat-input-area">
+                        <div class="preset-row">
+                            <span class="preset-label">Suggested Prompts:</span>
+                            <button class="btn-preset" data-query="Show me all money transfers over $10k linked to Front Company A">Transfers > $10k</button>
+                            <button class="btn-preset" data-query="Find all front companies and their sanction identifiers">Front Companies</button>
+                            <button class="btn-preset" data-query="Which threat actors are associated with front companies?">Threat Actors</button>
+                            <button class="btn-preset" data-query="Identify front companies in secrecy jurisdictions (Panama, Cyprus, Cayman Islands)">Secrecy Jurisdictions</button>
+                        </div>
+                        <div class="input-form">
+                            <input type="text" id="chat-input" placeholder="Type an analyst query (e.g. tell me about Titan Maritime Holdings)..." autocomplete="off">
+                            <button id="btn-send" class="btn-primary">SUBMIT QUERY</button>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Right: Event-Driven Ingestion Upload Zone -->
-            <aside class="side-section card upload-card">
-                <div class="card-header">
-                    <h2>Event-Driven OSINT Ingestion</h2>
-                    <span class="badge-status">REAL-TIME PIPELINE</span>
-                </div>
-                <div id="dropzone" class="dropzone-area">
-                    <div class="dropzone-text">
-                        <strong>Drop Raw Intel File Here</strong> or <span class="browse-link">Browse</span>
-                        <p class="dropzone-sub">Formats: CSV, TXT, PDF (OFAC / OSINT / FinCEN / Interpol reports)</p>
+            <!-- Right Column: Document Uploader (Top Right) & Sample Test Reports -->
+            <aside class="right-sidebar">
+                <!-- Event-Driven OSINT Ingestion Uploader (TOP RIGHT) -->
+                <div class="card uploader-topright-card">
+                    <div class="card-header">
+                        <h2>OSINT Ingestion Uploader</h2>
+                        <span class="badge-status">REAL-TIME</span>
                     </div>
-                    <input type="file" id="file-input" style="display: none;" accept=".csv,.txt,.pdf">
+                    <div id="dropzone" class="dropzone-area">
+                        <div class="dropzone-text">
+                            <strong>Drop Intel Report Here</strong> or <span class="browse-link">Browse</span>
+                            <p class="dropzone-sub">Supports CSV, TXT, PDF (FinCEN / Interpol / OFAC)</p>
+                        </div>
+                        <input type="file" id="file-input" style="display: none;" accept=".csv,.txt,.pdf">
+                    </div>
                 </div>
-                <div class="sample-download-area">
-                    <span class="sample-title">Download Realistic Sample Test Reports:</span>
-                    <div class="sample-buttons">
+
+                <!-- Realistic Sample Reports Box -->
+                <div class="card samples-card">
+                    <div class="card-header">
+                        <h2>Sample Intel Test Reports</h2>
+                    </div>
+                    <div class="sample-download-list">
+                        <p class="sample-desc">Click any sample report to download and drop into the Uploader above:</p>
                         <a href="https://raw.githubusercontent.com/gpham93/threat_intel_osint_pipeline/main/raw_intel/samples/finCEN_suspicious_activity_report_2026.csv" target="_blank" class="btn-sample">FinCEN SAR Report (CSV)</a>
                         <a href="https://raw.githubusercontent.com/gpham93/threat_intel_osint_pipeline/main/raw_intel/samples/interpol_red_notice_cyber_cartel_2026.txt" target="_blank" class="btn-sample">Interpol Advisory (TXT)</a>
-                        <a href="https://raw.githubusercontent.com/gpham93/threat_intel_osint_pipeline/main/raw_intel/samples/ofac_sanctions_advisory_2026.txt" target="_blank" class="btn-sample">OFAC Advisory (TXT)</a>
+                        <a href="https://raw.githubusercontent.com/gpham93/threat_intel_osint_pipeline/main/raw_intel/samples/ofac_sanctions_advisory_2026.txt" target="_blank" class="btn-sample">OFAC Sanctions Notice (TXT)</a>
                     </div>
                 </div>
             </aside>
@@ -193,6 +227,6 @@
     <!-- Notification Toast Container -->
     <div id="toast-container" class="toast-container"></div>
 
-    <script src="app.js?v=8"></script>
+    <script src="app.js?v=9"></script>
 </body>
 </html>
