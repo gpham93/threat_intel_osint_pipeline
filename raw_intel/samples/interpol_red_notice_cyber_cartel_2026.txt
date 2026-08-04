@@ -1,0 +1,29 @@
+INTERPOL DEFENSE THREAT INTEL ADVISORY // UNCLASSIFIED
+REF: INTERPOL-RED-2026-88192
+DATE: 2026-03-28
+
+SUBJECT: TRANSNATIONAL FINANCIAL CRIME & SHELL COMPANY PROXY NETWORK
+
+SUMMARY OF OSINT FINDINGS:
+Interpol Cyber Threat Intelligence Unit has identified an active illicit financial network operating across multiple secrecy jurisdictions (Panama, Cyprus, British Virgin Islands, Marshall Islands).
+
+TARGET THREAT ACTORS:
+1. Name: Victor Bout (Alias: "Merchant of Death")
+   Primary Entity: AeroVanguard Logistics Ltd (Panama, Reg: REG-88201)
+   Role: Ultimate Beneficial Owner (UBO) controlling illicit logistics & maritime transport assets.
+
+2. Name: Elena Rostova (Alias: "Operator Red")
+   Primary Entity: Helios Energy Trading Corp (Cyprus, Reg: CY-99412)
+   Role: Financial controller directing offshore wire transfers.
+
+3. Name: Dmitry Volkov (Alias: "Viper")
+   Primary Entity: Caspian Merchant Fleet Co (UAE, Reg: UAE-44109)
+   Role: Maritime fleet operator facilitating sanctioned cargo shipments.
+
+SUSPICIOUS FINANCIAL TRANSACTIONS:
+- $1,500,000.00 USD transferred from AeroVanguard Logistics Ltd (Panama) to Helios Energy Trading Corp (Cyprus).
+- $850,000.00 USD routed via Caspian Merchant Fleet Co (UAE) into offshore BVI shell accounts.
+- $2,100,000.00 USD funneled to Global Tech Supplies LLC (Seychelles) for encrypted communication hardware.
+
+RECOMMENDED ACTION:
+Initiate immediate blocking order under OFAC Executive Order 14024 and execute automated CCO/STIX 2.1 threat graph ingestion.

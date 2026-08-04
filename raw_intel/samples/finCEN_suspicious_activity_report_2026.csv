@@ -1,0 +1,6 @@
+transaction_id,timestamp,originator_name,originator_country,originator_reg_id,beneficiary_name,beneficiary_country,beneficiary_reg_id,amount_usd,swift_bic,risk_level,flagged_reason
+SAR-2026-9001,2026-03-12T14:22:00Z,AeroVanguard Logistics Ltd,Panama,REG-88201,Helios Energy Trading Corp,Cyprus,CY-99412,1500000.00,HELIOCY22,CRITICAL,OFAC Sanctions match & Layering pattern detected
+SAR-2026-9002,2026-03-14T09:15:30Z,Helios Energy Trading Corp,Cyprus,CY-99412,Caspian Merchant Fleet Co,UAE,UAE-44109,850000.00,CASPUAE44,HIGH,Secrecy jurisdiction wire transfer
+SAR-2026-9003,2026-03-18T18:45:12Z,Caspian Merchant Fleet Co,UAE,UAE-44109,Global Tech Supplies LLC,Seychelles,SEY-10294,2100000.00,GLOBSEY99,CRITICAL,High-value round dollar transfer without commercial invoice
+SAR-2026-9004,2026-03-22T11:05:00Z,Apex Cyber Solutions,Estonia,EE-77821,Titan Maritime Holdings,British Virgin Islands,BVI-30912,3200000.00,TITANBVI1,HIGH,Shell company proxy network transfer
+SAR-2026-9005,2026-03-25T16:30:45Z,Titan Maritime Holdings,British Virgin Islands,BVI-30912,Krypton Cyber Link Corp,Marshall Islands,MH-88102,1750000.00,KRYPMH88,CRITICAL,Sanction evasion corridor identified

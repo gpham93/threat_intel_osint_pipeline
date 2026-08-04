@@ -11,7 +11,7 @@
     <!-- Vis.js Network -->
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="style.css?v=7">
+    <link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
     <!-- Security Classification Banner -->
@@ -161,15 +161,16 @@
                 <div id="dropzone" class="dropzone-area">
                     <div class="dropzone-text">
                         <strong>Drop Raw Intel File Here</strong> or <span class="browse-link">Browse</span>
-                        <p class="dropzone-sub">Formats: CSV, TXT, PDF (OFAC / OSINT reports)</p>
+                        <p class="dropzone-sub">Formats: CSV, TXT, PDF (OFAC / OSINT / FinCEN / Interpol reports)</p>
                     </div>
                     <input type="file" id="file-input" style="display: none;" accept=".csv,.txt,.pdf">
                 </div>
                 <div class="sample-download-area">
-                    <span class="sample-title">Download Sample Test Reports:</span>
+                    <span class="sample-title">Download Realistic Sample Test Reports:</span>
                     <div class="sample-buttons">
-                        <a href="https://raw.githubusercontent.com/gpham93/threat_intel_osint_pipeline/main/raw_intel/samples/osint_financial_crime_report_2026.csv" target="_blank" class="btn-sample">Sample CSV Report</a>
-                        <a href="https://raw.githubusercontent.com/gpham93/threat_intel_osint_pipeline/main/raw_intel/samples/ofac_sanctions_advisory_2026.txt" target="_blank" class="btn-sample">Sample TXT Advisory</a>
+                        <a href="https://raw.githubusercontent.com/gpham93/threat_intel_osint_pipeline/main/raw_intel/samples/finCEN_suspicious_activity_report_2026.csv" target="_blank" class="btn-sample">FinCEN SAR Report (CSV)</a>
+                        <a href="https://raw.githubusercontent.com/gpham93/threat_intel_osint_pipeline/main/raw_intel/samples/interpol_red_notice_cyber_cartel_2026.txt" target="_blank" class="btn-sample">Interpol Advisory (TXT)</a>
+                        <a href="https://raw.githubusercontent.com/gpham93/threat_intel_osint_pipeline/main/raw_intel/samples/ofac_sanctions_advisory_2026.txt" target="_blank" class="btn-sample">OFAC Advisory (TXT)</a>
                     </div>
                 </div>
             </aside>
@@ -192,6 +193,6 @@
     <!-- Notification Toast Container -->
     <div id="toast-container" class="toast-container"></div>
 
-    <script src="app.js?v=7"></script>
+    <script src="app.js?v=8"></script>
 </body>
 </html>
