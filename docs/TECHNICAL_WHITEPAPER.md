@@ -20,7 +20,7 @@ The Threat Intelligence OSINT Platform is an enterprise-grade multi-agent softwa
                        (Expectation-Maximization Matcher)
                                          │
                                          ▼
-                  [ CCO / BFO OWL2 Knowledge Graph (RDFLib/GraphDB) ]
+                  [ CCO / BFO OWL2 Knowledge Graph (RDFLib / Turtle) ]
                                          │
                     ┌────────────────────┴────────────────────┐
                     ▼                                         ▼
@@ -79,9 +79,9 @@ Pairs exceeding match probability threshold $P(M | \gamma) \ge 0.60$ are cluster
 
 ---
 
-## 4. GraphRAG NLI Entailment Proof & Zero-Hallucination Engine
+## 4. Triple Store Architecture & GraphRAG NLI Reasoning Engine
 
-To eliminate LLM hallucinations in security environments, natural language queries are deterministically translated into SPARQL 1.1 queries executed against the Turtle RDF graph. Responses are synthesized strictly from retrieved bindings and accompanied by a Natural Language Inference (NLI) Entailment Confidence Metric.
+The system utilizes **W3C RDFLib** as an in-memory RDF Triple Store and Turtle Graph Engine executing high-performance SPARQL 1.1 queries over 11,147 triples, with native pluggability to external enterprise SPARQL endpoints (Ontotext GraphDB / Apache Jena Fuseki).
 
 ### 4.1 Entailment Proof Formulation
 

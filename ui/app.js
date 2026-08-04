@@ -731,7 +731,7 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
                     </div>
 
                     <div class="trace-block">
-                        <div class="trace-title">b) Raw RDF Triples (GraphDB Bindings):</div>
+                        <div class="trace-title">b) Raw RDF Triples (RDFLib / SPARQL Bindings):</div>
                         <div class="table-container">${tableHtml}</div>
                     </div>
 

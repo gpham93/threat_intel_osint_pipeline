@@ -28,7 +28,7 @@ An enterprise-grade defense intelligence platform combining Basic Formal Ontolog
                                   (Expectation-Maximization Matcher)
                                                     │
                                                     ▼
-                             [ BFO / CCO OWL2 Knowledge Graph (RDFLib/GraphDB) ]
+                          [ BFO / CCO OWL2 Knowledge Graph (RDFLib / Turtle) ]
                                                     │
                       ┌─────────────────────────────┴─────────────────────────────┐
                       ▼                                                           ▼
@@ -60,26 +60,32 @@ To resolve duplicate entities across noisy OSINT reports, OFAC sanctions advisor
   $$P(M | \gamma) = \frac{\pi \prod_k P(\gamma_k | M)}{\pi \prod_k P(\gamma_k | M) + (1-\pi) \prod_k P(\gamma_k | U)}$$
 - Pairs exceeding match probability threshold $P(M | \gamma) \ge 0.60$ are clustered into canonical equivalence classes assigned persistent URIs (`http://example.org/threat#FrontCompany_{cluster_id}`).
 
-### 3. Cyber Threat Intelligence Standardization (STIX 2.1)
+### 3. Graph Engine & Triple Store Architecture (W3C RDFLib & Pluggable Endpoints)
+The platform uses **W3C RDFLib** (`rdflib.Graph`) as its primary in-memory RDF Triple Store and Turtle RDF Graph Engine for high-speed SPARQL 1.1 query execution over 11,147 triples.
+
+- **Storage Layer**: In-memory W3C Turtle (`.ttl`) graph storage (`ontology/threat_model_large.ttl`).
+- **Pluggable Enterprise Endpoints**: Native compatibility with HTTP SPARQL endpoints (Ontotext GraphDB, Apache Jena Fuseki, AWS Neptune) via standard SPARQL 1.1 protocol (`/repositories/threat-intel/statements`).
+
+### 4. Cyber Threat Intelligence Standardization (STIX 2.1)
 All resolved threat network triples convert bidirectionally into W3C RDF and STIX 2.1 JSON schemas (`threat-actor`, `identity`, `relationship`) for automated distribution via TAXII 2.1 servers compliant with CISA and DoD Cyber Threat Intelligence standards.
 
-### 4. Zero-Hallucination GraphRAG & NLI Entailment Proofs
+### 5. Zero-Hallucination GraphRAG & NLI Entailment Proofs
 To eliminate LLM hallucinations in national security applications, natural language prompts are deterministically translated into SPARQL 1.1 queries executed against the Turtle RDF graph. Responses are synthesized strictly from retrieved bindings accompanied by an explicit Natural Language Inference (NLI) Confidence Metric:
 
 $$C_{\text{NLI}} = \min (99.4\%, \; 92.0\% + 1.8\% \times |B|)$$
 
 Every response displays a collapsible Reasoning Trace detailing:
 1. **Generated SPARQL 1.1 Query**
-2. **Raw RDF Triples (GraphDB Bindings Table)**
+2. **Raw RDF Triples (RDFLib / SPARQL Bindings Table)**
 3. **NLI Verification Confidence Score**
 
-### 5. Multi-Hop Link Analysis & Spatiotemporal Playback
+### 6. Multi-Hop Link Analysis & Spatiotemporal Playback
 - **Pathfinder Tool**: Calculates Breadth-First Search (BFS) shortest paths between any two threat entities.
 - **HVT Centrality**: Computes Betweenness Centrality $C_B(v) = \sum_{s \neq v \neq t} \frac{\sigma_{st}(v)}{\sigma_{st}}$ to highlight bottleneck targets.
 - **4D Temporal Scrubbing**: Interactive timeline ($2024 \rightarrow 2026$) with Play/Pause animation enabling historical playback of network emergence.
 - **Multi-Level Security (MLS)**: Multi-level classification headers (`UNCLASSIFIED`, `SECRET // NOFORN`, `TOP SECRET // SI/TK`).
 
-### 6. Design System Architecture (Refactoring UI / Adam Wathan)
+### 7. Design System Architecture (Refactoring UI / Adam Wathan)
 The user interface adheres strictly to Refactoring UI ergonomics:
 - **Left Sidebar**: Dedicated Intelligence Metrics Box (Total Entities, Financial Volume, Triple Count, Latency, NLI Score, MLS clearance selector) and Link Pathfinder controls.
 - **Center Stage**: Prominent Threat Network Graph Visualizer (400px canvas) and Conversational Analyst Interface.
