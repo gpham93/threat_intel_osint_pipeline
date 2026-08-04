@@ -32,22 +32,18 @@ The Threat Intelligence OSINT Platform is an enterprise-grade multi-agent softwa
 
 ## 2. Formal Upper Ontology Engineering (BFO & CCO Alignment)
 
-The domain model extends the **Basic Formal Ontology (BFO)** and **Common Core Ontologies (CCO)** to establish semantic interoperability across defense coalition networks using non-proprietary, open standards.
+The domain model extends the Basic Formal Ontology (BFO) and Common Core Ontologies (CCO) to establish semantic interoperability across defense coalition networks using non-proprietary, open standards.
 
 ### 2.1 Taxonomy & Class Hierarchy
 
-$$\text{bfo:Entity} \implies \text{bfo:Continuant} \implies \text{cco:Agent}$$
-$$\text{cco:Person} \sqsubset \text{cco:Agent}$$
-$$\text{cco:Organization} \sqsubset \text{cco:Agent}$$
-$$\text{threat:ThreatActor} \sqsubseteq \text{cco:Person}$$
-$$\text{threat:FrontCompany} \sqsubseteq \text{cco:Organization}$$
-$$\text{threat:MoneyTransfer} \sqsubseteq \text{cco:ActOfCommerce} \sqsubseteq \text{bfo:Occurrent}$$
+- `bfo:Entity` -> `bfo:Continuant` -> `cco:Agent` -> (`cco:Person` | `cco:Organization`)
+- `threat:ThreatActor` -> `cco:Person`
+- `threat:FrontCompany` -> `cco:Organization`
+- `threat:MoneyTransfer` -> `cco:ActOfCommerce` -> `bfo:Occurrent`
 
 ### 2.2 Property Restrictions & Axioms
 
-An `ActOfCommerce` or `MoneyTransfer` is constrained by strict OWL2 object property restrictions ensuring existential agent attribution:
-
-$$\text{threat:MoneyTransfer} \sqsubseteq \exists \text{threat:has\_agent}.(\text{cco:Person} \sqcup \text{cco:Organization})$$
+An `ActOfCommerce` or `MoneyTransfer` is constrained by strict OWL2 object property restrictions ensuring existential agent attribution requiring at least one associated `cco:Person` or `cco:Organization`.
 
 ```turtle
 threat:MoneyTransfer a owl:Class ;
@@ -66,7 +62,7 @@ threat:MoneyTransfer a owl:Class ;
 
 ## 3. Probabilistic Identity Resolution (Splink EM Formulation)
 
-Identity resolution across disparate sanctions lists and OSINT feeds utilizes **Fellegi-Sunter Probabilistic Record Linkage** optimized via Expectation-Maximization (EM) on PySpark.
+Identity resolution across disparate sanctions lists and OSINT feeds utilizes Fellegi-Sunter Probabilistic Record Linkage optimized via Expectation-Maximization (EM) on PySpark.
 
 ### 3.1 Match Probability Formulation
 
@@ -85,17 +81,17 @@ Pairs exceeding match probability threshold $P(M | \gamma) \ge 0.60$ are cluster
 
 ## 4. GraphRAG NLI Entailment Proof & Zero-Hallucination Engine
 
-To eliminate LLM hallucinations in security environments, natural language queries are deterministically translated into SPARQL 1.1 queries executed against the Turtle RDF graph. Responses are synthesized strictly from retrieved bindings and accompanied by a **Natural Language Inference (NLI) Entailment Confidence Metric**.
+To eliminate LLM hallucinations in security environments, natural language queries are deterministically translated into SPARQL 1.1 queries executed against the Turtle RDF graph. Responses are synthesized strictly from retrieved bindings and accompanied by a Natural Language Inference (NLI) Entailment Confidence Metric.
 
 ### 4.1 Entailment Proof Formulation
 
-Let $Q_{\text{NL}}$ be the natural language prompt, $S_Q = \text{SPARQL}(Q_{\text{NL}})$ be the generated SPARQL query, and $\mathcal{B} = \text{Eval}(S_Q, \mathcal{G}_{\text{RDF}})$ be the set of retrieved RDF bindings.
+Let $Q_{\text{NL}}$ be the natural language prompt, $S_Q = \text{SPARQL}(Q_{\text{NL}})$ be the generated SPARQL query, and $B = \text{Eval}(S_Q, G_{\text{RDF}})$ be the set of retrieved RDF bindings.
 
-The NLI Entailment Confidence $C_{\text{NLI}}(\text{Response}, \mathcal{B})$ is evaluated as:
+The NLI Entailment Confidence $C_{\text{NLI}}(\text{Response}, B)$ is evaluated as:
 
-$$C_{\text{NLI}} = \min \left(99.4\%, \; 92.0\% + 1.8\% \cdot |\mathcal{B}| \right) \quad \text{for } |\mathcal{B}| > 0$$
+$$C_{\text{NLI}} = \min \left( 99.4\%, \; 92.0\% + 1.8\% \times |B| \right) \quad \text{for } |B| > 0$$
 
-If $|\mathcal{B}| = 0$, $C_{\text{NLI}} = 0.0\%$ (`UNVERIFIED`).
+If $|B| = 0$, $C_{\text{NLI}} = 0.0\%$ (`UNVERIFIED`).
 
 ---
 
