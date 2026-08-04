@@ -66,7 +66,7 @@ All resolved threat network triples convert bidirectionally into W3C RDF and STI
 ### 4. Zero-Hallucination GraphRAG & NLI Entailment Proofs
 To eliminate LLM hallucinations in national security applications, natural language prompts are deterministically translated into SPARQL 1.1 queries executed against the Turtle RDF graph. Responses are synthesized strictly from retrieved bindings accompanied by an explicit Natural Language Inference (NLI) Confidence Metric:
 
-$$C_{\text{NLI}} = \min \left( 99.4\%, \; 92.0\% + 1.8\% \times |B| \right) \quad \text{for } |B| > 0$$
+$$C_{\text{NLI}} = \min (99.4\%, \; 92.0\% + 1.8\% \times |B|)$$
 
 Every response displays a collapsible Reasoning Trace detailing:
 1. **Generated SPARQL 1.1 Query**
@@ -75,7 +75,7 @@ Every response displays a collapsible Reasoning Trace detailing:
 
 ### 5. Multi-Hop Link Analysis & Spatiotemporal Playback
 - **Pathfinder Tool**: Calculates Breadth-First Search (BFS) shortest paths between any two threat entities.
-- **HVT Centrality**: Computes Betweenness Centrality $C_B(v) = \sum \frac{\sigma_{st}(v)}{\sigma_{st}}$ to highlight bottleneck targets.
+- **HVT Centrality**: Computes Betweenness Centrality $C_B(v) = \sum_{s \neq v \neq t} \frac{\sigma_{st}(v)}{\sigma_{st}}$ to highlight bottleneck targets.
 - **4D Temporal Scrubbing**: Interactive timeline ($2024 \rightarrow 2026$) with Play/Pause animation enabling historical playback of network emergence.
 - **Multi-Level Security (MLS)**: Multi-level classification headers (`UNCLASSIFIED`, `SECRET // NOFORN`, `TOP SECRET // SI/TK`).
 

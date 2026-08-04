@@ -89,7 +89,7 @@ Let $Q_{\text{NL}}$ be the natural language prompt, $S_Q = \text{SPARQL}(Q_{\tex
 
 The NLI Entailment Confidence $C_{\text{NLI}}(\text{Response}, B)$ is evaluated as:
 
-$$C_{\text{NLI}} = \min \left( 99.4\%, \; 92.0\% + 1.8\% \times |B| \right) \quad \text{for } |B| > 0$$
+$$C_{\text{NLI}} = \min (99.4\%, \; 92.0\% + 1.8\% \times |B|)$$
 
 If $|B| = 0$, $C_{\text{NLI}} = 0.0\%$ (`UNVERIFIED`).
 
