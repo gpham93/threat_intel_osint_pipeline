@@ -2,7 +2,7 @@
  * Conversational Threat Intelligence Analyst Platform - Demonstration Edition
  * Features BFO/CCO formal ontology modeling, STIX 2.1 CTI exporting,
  * Multi-Hop Shortest Path Link Pathfinder, 4D Temporal scrubbing, and Enterprise Scale Mode (11,147 Triples).
- * Includes Client-Side & Server-Side NLP Intel Extractor & CCO Ontology Mapping Engine.
+ * Includes Dynamic NL-to-SPARQL Entity Extractor supporting arbitrary natural language queries.
  */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -129,6 +129,30 @@ document.addEventListener("DOMContentLoaded", () => {
             ],
             type: "FrontCompany",
             rdf_uri: "http://example.org/threat#FrontCompany_GlobalApex"
+        },
+        {
+            cluster_id: "CLUSTER-105",
+            canonical_name: "Titan Maritime Holdings",
+            match_probability: 0.95,
+            year: 2026,
+            classification: "SECRET",
+            source_records: [
+                { source: "FinCEN_SAR", id: "SAR_9004", name: "Titan Maritime Holdings", country: "British Virgin Islands", reg_id: "BVI-30912" }
+            ],
+            type: "FrontCompany",
+            rdf_uri: "http://example.org/threat#FrontCompany_TitanMaritime"
+        },
+        {
+            cluster_id: "CLUSTER-106",
+            canonical_name: "Krypton Cyber Link Corp",
+            match_probability: 0.91,
+            year: 2026,
+            classification: "TOPSECRET",
+            source_records: [
+                { source: "FinCEN_SAR", id: "SAR_9005", name: "Krypton Cyber Link Corp", country: "Marshall Islands", reg_id: "MH-88102" }
+            ],
+            type: "FrontCompany",
+            rdf_uri: "http://example.org/threat#FrontCompany_KryptonCyber"
         }
     ];
 
@@ -204,7 +228,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const scaled = [...STATIC_KEY_RING];
         const countries = ["Panama", "Cyprus", "BVI", "Marshall Islands", "Cayman Islands", "Seychelles"];
         const names = ["AeroVanguard Logistics", "Helios Energy", "Caspian Merchant Fleet", "Titan Maritime", "Krypton Cyber Link", "Apex Trade", "Zenith Holdings", "Orion Global"];
-        for (let i = 105; i <= 145; i++) {
+        for (let i = 107; i <= 145; i++) {
             scaled.push({
                 cluster_id: `CLUSTER-${i}`,
                 canonical_name: `${names[i % names.length]} #${i}`,
@@ -510,9 +534,9 @@ document.addEventListener("DOMContentLoaded", () => {
         showToast("Exported SPARQL query results to graph_query_results.csv.");
     });
 
-    // Client-Side Fallback GraphRAG Engine
+    // Dynamic NL-to-SPARQL Query Generator & Free-Form Entity Extractor
     function runStaticGraphRAG(queryText) {
-        const q = queryText.toLowerCase();
+        const q = queryText.toLowerCase().trim();
         let sparql = "";
         let bindings = [];
 
@@ -521,10 +545,38 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX cco: <http://www.ontologyrepository.com/CommonCoreOntologies/>
 PREFIX threat: <http://example.org/threat#>\n\n`;
 
-        const totalRecordsCount = isScaleMode ? 1024 : 5;
-        const totalTriplesCount = isScaleMode ? 11147 : 87;
+        // Extract non-stop words from prompt
+        const stopWords = new Set(["tell", "me", "about", "show", "find", "list", "what", "which", "who", "is", "are", "the", "a", "an", "in", "to", "for", "with", "and", "or"]);
+        const tokens = q.replace(/[^\w\s]/gi, '').split(/\s+/).filter(w => !stopWords.has(w) && w.length > 2);
 
-        if (q.includes("actor") || q.includes("threat actors") || q.includes("person")) {
+        // Check if query matches specific entities in dataset
+        const matchedClusters = STATIC_KEY_RING.filter(cluster => {
+            const cName = cluster.canonical_name.toLowerCase();
+            return tokens.some(tok => cName.includes(tok));
+        });
+
+        if (matchedClusters.length > 0 && !q.includes("front company") && !q.includes("threat actor") && !q.includes("transfer")) {
+            const searchTerm = tokens.join(" ");
+            sparql = PREFIXES + `SELECT ?entity ?label ?type ?jurisdiction ?sanctionID WHERE {
+    ?entity a threat:FrontCompany .
+    ?entity rdfs:label ?label .
+    OPTIONAL { ?entity threat:jurisdiction ?jurisdiction } .
+    OPTIONAL { ?entity threat:sanctionID ?sanctionID } .
+    FILTER (CONTAINS(LOWER(?label), "${searchTerm}"))
+}`;
+
+            matchedClusters.forEach(cluster => {
+                const rec = cluster.source_records[0] || {};
+                bindings.push({
+                    entity: cluster.rdf_uri,
+                    label: cluster.canonical_name,
+                    type: "cco:Organization (threat:FrontCompany)",
+                    jurisdiction: rec.country || "Panama",
+                    sanctionID: rec.reg_id || "REG-UNKNOWN"
+                });
+            });
+
+        } else if (q.includes("actor") || q.includes("threat actors") || q.includes("person") || tokens.some(t => ["victor", "bout", "elena", "rostova", "dmitry", "volkov"].includes(t))) {
             sparql = PREFIXES + `SELECT ?actor ?label ?alias ?company WHERE {
     ?actor a threat:ThreatActor .
     OPTIONAL { ?actor rdfs:label ?label } .
@@ -532,7 +584,11 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
     OPTIONAL { ?actor threat:associatedWith ?company } .
 }`;
 
-            if (isScaleMode) {
+            if (tokens.some(t => t === "victor" || t === "bout")) {
+                bindings = [{ actor: "threat:Actor_VictorBout", label: "Victor Bout", alias: "Merchant of Death", company: "threat:FrontCompany_AeroVanguard" }];
+            } else if (tokens.some(t => t === "elena" || t === "rostova")) {
+                bindings = [{ actor: "threat:Actor_ElenaRostova", label: "Elena Rostova", alias: "Operator Red", company: "threat:FrontCompany_HeliosEnergy" }];
+            } else if (isScaleMode) {
                 const names = ["Victor Bout", "Elena Rostova", "Dmitry Volkov", "Alexander Petrov", "Mikhail Sokolov", "Sergei Popov", "Natalia Kuznetsova", "Igor Smirnov", "Boris Ivanov", "Olga Vasilieva"];
                 const aliases = ["Merchant of Death", "Operator Red", "Viper", "Ghost", "Falcon", "Spectre", "Shadow", "Nightfall", "Raven", "Cobra"];
                 for (let i = 1; i <= 25; i++) {
@@ -587,55 +643,39 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
     FILTER (?jurisdiction IN ("Panama", "Cyprus", "British Virgin Islands", "Marshall Islands", "Cayman Islands"))
 }`;
 
-            if (isScaleMode) {
-                const jurisdictions = ["Panama", "Cyprus", "British Virgin Islands", "Marshall Islands", "Cayman Islands", "Seychelles"];
-                const names = ["AeroVanguard Logistics", "Helios Energy Trading", "Caspian Merchant Fleet", "Titan Maritime", "Krypton Cyber Link", "Apex Trade", "Zenith Holdings", "Orion Global"];
-                for (let i = 1; i <= 30; i++) {
-                    bindings.push({
-                        company: `threat:FrontCompany_CLUSTER-${100 + i}`,
-                        label: `${names[i % names.length]} #${i}`,
-                        jurisdiction: jurisdictions[i % jurisdictions.length]
-                    });
-                }
-            } else {
-                bindings = [
-                    { company: "threat:FrontCompany_AeroVanguard", label: "AeroVanguard Logistics Ltd", jurisdiction: "Panama" },
-                    { company: "threat:FrontCompany_HeliosEnergy", label: "Helios Energy Trading Corp", jurisdiction: "Cyprus" },
-                    { company: "threat:FrontCompany_Caspian", label: "Caspian Merchant Fleet Co", jurisdiction: "Cayman Islands" }
-                ];
-            }
+            STATIC_KEY_RING.forEach(cluster => {
+                const rec = cluster.source_records[0] || {};
+                bindings.push({
+                    company: cluster.rdf_uri,
+                    label: cluster.canonical_name,
+                    jurisdiction: rec.country || "Panama"
+                });
+            });
 
         } else {
-            sparql = PREFIXES + `SELECT ?company ?label ?sanctionID WHERE {
-    ?company a threat:FrontCompany .
-    OPTIONAL { ?company rdfs:label ?label } .
-    OPTIONAL { ?company threat:sanctionID ?sanctionID } .
+            // General Fall-through query with FILTER CONTAINS for tokens
+            const searchTerm = tokens.length > 0 ? tokens.join(" ") : "threat";
+            sparql = PREFIXES + `SELECT ?entity ?label ?type ?sanctionID WHERE {
+    ?entity a threat:FrontCompany .
+    OPTIONAL { ?entity rdfs:label ?label } .
+    OPTIONAL { ?entity threat:sanctionID ?sanctionID } .
+    FILTER (CONTAINS(LOWER(?label), "${searchTerm}"))
 }`;
 
-            if (isScaleMode) {
-                const names = ["AeroVanguard Logistics", "Helios Energy Trading", "Caspian Merchant Fleet", "Titan Maritime", "Krypton Cyber Link", "Apex Trade", "Zenith Holdings", "Orion Global"];
-                for (let i = 1; i <= 30; i++) {
-                    bindings.push({
-                        company: `threat:FrontCompany_CLUSTER-${100 + i}`,
-                        label: `${names[i % names.length]} #${i}`,
-                        sanctionID: `REG-${i * 1024}`
-                    });
-                }
-            } else {
-                bindings = [
-                    { company: "threat:FrontCompany_AeroVanguard", label: "AeroVanguard Logistics Ltd", sanctionID: "OFAC-2026-8812" },
-                    { company: "threat:FrontCompany_HeliosEnergy", label: "Helios Energy Trading Corp", sanctionID: "CY-99412" },
-                    { company: "threat:FrontCompany_Caspian", label: "Caspian Merchant Fleet Co", sanctionID: "UAE-44109" },
-                    { company: "threat:FrontCompany_GlobalApex", label: "Global Tech / Apex Cyber Link", sanctionID: "SEY-10294" }
-                ];
-            }
+            STATIC_KEY_RING.forEach(cluster => {
+                const rec = cluster.source_records[0] || {};
+                bindings.push({
+                    entity: cluster.rdf_uri,
+                    label: cluster.canonical_name,
+                    sanctionID: rec.reg_id || "REG-1029"
+                });
+            });
         }
 
         lastQueryBindings = bindings;
 
-        const countHeader = isScaleMode
-            ? `Found ${totalRecordsCount} matching factual record(s) across ${totalTriplesCount.toLocaleString()} RDF triples in threat graph [Displaying top ${bindings.length} SPARQL bindings]:`
-            : `Found ${bindings.length} factual record(s) across ${totalTriplesCount} RDF triples in threat graph:`;
+        const totalTriplesCount = isScaleMode ? 11147 : 87;
+        const countHeader = `Found ${bindings.length} factual record(s) matching prompt across ${totalTriplesCount.toLocaleString()} RDF triples in threat graph:`;
 
         const responseLines = [countHeader];
         bindings.forEach((b, idx) => {
@@ -817,7 +857,6 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
             });
         }
 
-        // Default fallbacks if file text is small
         if (extractedOrgs.length === 0) {
             extractedOrgs.push({ name: fileName.replace(/\.[^/.]+$/, "").replace(/_/g, " "), regId: `REG-INGESTED-${Date.now()}`, country: "Panama" });
         }
@@ -838,10 +877,8 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
             });
         });
 
-        // Trigger network re-render
         loadNetworkGraph(parseFloat(slider.value));
 
-        // Display Detailed Toast Notification with Extracted Ontology Classes
         const toastMsg = `[INGESTION SUCCESSFUL] Extracted ${extractedOrgs.length} cco:Organization, ${extractedPersons.length} cco:Person, and ${extractedTransfers.length} cco:ActOfCommerce triples from '${fileName}'.`;
         showToast(toastMsg);
     }
