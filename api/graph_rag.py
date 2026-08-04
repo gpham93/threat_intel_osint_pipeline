@@ -85,9 +85,10 @@ class GraphRAGQueryEngine:
         """
         Translates natural language prompt to a SPARQL 1.1 SELECT query using LLM logic or template rules.
         """
-        query_lower = natural_language_query.lower()
+        query_lower = natural_language_query.lower().strip()
+        stop_words = {"tell", "me", "about", "show", "find", "list", "what", "which", "who", "is", "are", "the", "a", "an", "in", "to", "for", "with", "and", "or"}
+        words = [w for w in re.findall(r"\w+", query_lower) if w not in stop_words and len(w) > 2]
 
-        # Heuristic SPARQL generation fallback / deterministic translation for demo execution
         if "front company" in query_lower or "front companies" in query_lower:
             return (
                 THREAT_PREFIXES
@@ -124,8 +125,20 @@ SELECT ?transfer ?sender ?receiver ?amount ?currency WHERE {
 }
 """
             )
+        elif words:
+            search_term = " ".join(words)
+            return (
+                THREAT_PREFIXES
+                + f"""
+SELECT ?entity ?label ?type ?predicate ?value WHERE {{
+    ?entity rdfs:label ?label .
+    OPTIONAL {{ ?entity a ?type }} .
+    OPTIONAL {{ ?entity ?predicate ?value }} .
+    FILTER (CONTAINS(LOWER(?label), "{search_term}") || CONTAINS(LOWER(STR(?entity)), "{words[0]}"))
+}}
+"""
+            )
         else:
-            # Default fall-through query retrieving threat entities
             return (
                 THREAT_PREFIXES
                 + """
