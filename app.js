@@ -1497,7 +1497,112 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
                 initializeChartInstance(queryId, visualStrategy);
             }, 50);
         }
+
+        // Dynamically Synchronize Top Vis.js Canvas Topology with Query Subgraph
+        setTimeout(() => {
+            syncGraphCanvasWithQueryResults(ragData.raw_bindings || [], queryText);
+        }, 100);
     }
+
+    // Synchronize Top Vis.js Canvas Topology with Chat Query Results
+    function syncGraphCanvasWithQueryResults(bindings, queryText) {
+        if (!network || !currentNodesDataSet || !bindings || bindings.length === 0) return;
+
+        const allNodes = currentNodesDataSet.get();
+        const matchedNodeIds = new Set();
+
+        // Extract search terms from query bindings
+        const searchTerms = new Set();
+        bindings.forEach(b => {
+            Object.values(b).forEach(val => {
+                if (typeof val === "string" && val.trim()) {
+                    const clean = val.split("#").pop().replace(/#\d+/, "").trim().toLowerCase();
+                    if (clean.length > 2) {
+                        searchTerms.add(clean);
+                    }
+                }
+            });
+        });
+
+        // Also add key query keywords
+        queryText.toLowerCase().split(/\s+/).forEach(w => {
+            const cleanW = w.replace(/[^a-z0-9]/g, "");
+            if (cleanW.length > 3 && !["show", "tell", "about", "what", "which", "where", "from", "into", "with", "most", "graph", "plot", "chart", "companies", "company", "threat", "actors", "transfers"].includes(cleanW)) {
+                searchTerms.add(cleanW);
+            }
+        });
+
+        // Match against graph nodes
+        allNodes.forEach(node => {
+            const lbl = (node.label || "").toLowerCase();
+            const id = (node.id || "").toLowerCase();
+            const title = (node.title || "").toLowerCase();
+            const uri = (node.uri || "").toLowerCase();
+
+            for (const term of searchTerms) {
+                if (lbl.includes(term) || id.includes(term) || title.includes(term) || uri.includes(term)) {
+                    matchedNodeIds.add(node.id);
+                    break;
+                }
+            }
+        });
+
+        if (matchedNodeIds.size === 0) return;
+
+        // Update node visuals on canvas: highlight matched subgraph, dim unrelated nodes
+        const updatedNodes = allNodes.map(node => {
+            if (matchedNodeIds.has(node.id)) {
+                return {
+                    ...node,
+                    borderWidth: 3,
+                    shadow: { enabled: true, color: '#38bdf8', size: 18, x: 0, y: 0 },
+                    opacity: 1.0
+                };
+            } else {
+                return {
+                    ...node,
+                    borderWidth: 1,
+                    shadow: { enabled: false },
+                    opacity: 0.2
+                };
+            }
+        });
+
+        currentNodesDataSet.update(updatedNodes);
+
+        // Smoothly Pan and Zoom Canvas to the matched subgraph
+        const nodeIdsArray = Array.from(matchedNodeIds);
+        if (nodeIdsArray.length === 1) {
+            network.focus(nodeIdsArray[0], {
+                scale: 1.3,
+                animation: { duration: 900, easingFunction: 'easeInOutQuad' }
+            });
+        } else {
+            network.fit({
+                nodes: nodeIdsArray,
+                animation: { duration: 900, easingFunction: 'easeInOutQuad' }
+            });
+        }
+
+        network.selectNodes(nodeIdsArray);
+        showToast(`📍 Visualizer synced: Focused on ${nodeIdsArray.length} entity node(s) matching query.`);
+    }
+
+    // Reset Canvas Visualizer View
+    window.resetGraphCanvasView = function() {
+        if (!network || !currentNodesDataSet) return;
+        const allNodes = currentNodesDataSet.get();
+        const resetNodes = allNodes.map(node => ({
+            ...node,
+            borderWidth: 1,
+            shadow: { enabled: false },
+            opacity: 1.0
+        }));
+        currentNodesDataSet.update(resetNodes);
+        network.unselectAll();
+        network.fit({ animation: { duration: 600 } });
+        showToast("Canvas visualizer reset to full network.");
+    };
 
     // Client-Side Intel Entity Extractor & CCO Ontology Mapper
     function parseAndMapIntelFileToCCO(fileContent, fileName) {
