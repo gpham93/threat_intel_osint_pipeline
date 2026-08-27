@@ -1053,14 +1053,71 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
 
         const q = queryText.toLowerCase().trim();
 
-        // 1. Explicit Chart Requests (User asked for a chart/graph/visualization)
-        const explicitlyRequestsChart = q.includes("bar graph") || q.includes("chart") || q.includes("plot") || q.includes("visualize") || q.includes("histogram") || q.includes("distribution");
+        // Check for specific chart format requests
+        const requestsPie = q.includes("pie") || q.includes("piechart") || q.includes("pie-chart");
+        const requestsDoughnut = q.includes("doughnut") || q.includes("donut");
+        const requestsBar = q.includes("bar") || q.includes("bargraph") || q.includes("bar-graph") || q.includes("histogram");
+        const requestsChartGeneric = q.includes("chart") || q.includes("plot") || q.includes("visualize") || q.includes("graph") || q.includes("distribution") || q.includes("breakdown");
 
-        // 2. Financial Aggregation / Multi-transfer comparison
+        const explicitlyRequestsChart = requestsPie || requestsDoughnut || requestsBar || requestsChartGeneric;
+
+        // 1. Explicit Pie or Doughnut Chart Request
+        if (requestsPie || requestsDoughnut) {
+            let labels = [];
+            let dataValues = [];
+            let isCurrency = false;
+            let title = requestsPie ? "PROPORTIONAL BREAKDOWN (PIE CHART)" : "PROPORTIONAL BREAKDOWN (DOUGHNUT CHART)";
+
+            // Extract from jurisdictions if present
+            if (bindings.some(b => b.jurisdiction)) {
+                title = requestsPie ? "OFFSHORE JURISDICTION PROPORTIONS (PIE CHART)" : "OFFSHORE JURISDICTION PROPORTIONS (DOUGHNUT)";
+                const counts = {};
+                bindings.forEach(b => {
+                    const j = b.jurisdiction || "Unknown";
+                    counts[j] = (counts[j] || 0) + 1;
+                });
+                labels = Object.keys(counts);
+                dataValues = Object.values(counts);
+            }
+            // Extract from wire transfers if present
+            else if (bindings.some(b => b.amount || b.transferAmount)) {
+                title = requestsPie ? "FINANCIAL WIRE ALLOCATION (PIE CHART)" : "FINANCIAL WIRE ALLOCATION (DOUGHNUT)";
+                isCurrency = true;
+                bindings.slice(0, 8).forEach(b => {
+                    const s = (b.senderLabel || b.companyLabel || b.company || "Transfer").split("#").pop().replace(/#\d+/, "");
+                    const val = parseFloat(b.amount || b.transferAmount || 0);
+                    if (!isNaN(val) && val > 0) {
+                        labels.push(s);
+                        dataValues.push(val);
+                    }
+                });
+            }
+            // Fallback: group by entity names / labels
+            else {
+                bindings.slice(0, 8).forEach((b, idx) => {
+                    const name = (b.label || b.companyLabel || b.actorLabel || b.entity || `Entity ${idx+1}`).split("#").pop();
+                    labels.push(name);
+                    dataValues.push(1);
+                });
+            }
+
+            if (labels.length > 0 && dataValues.length > 0) {
+                return {
+                    type: requestsPie ? "PIE_CHART" : "DOUGHNUT_CHART",
+                    title: title,
+                    strategyReason: requestsPie ? "Proportional Pie Chart selected per explicit analyst visual request." : "Proportional Doughnut Chart selected per explicit analyst visual request.",
+                    labels: labels,
+                    dataValues: dataValues,
+                    isCurrency: isCurrency
+                };
+            }
+        }
+
+        // 2. Financial Aggregation / Multi-transfer comparison (Bar Chart)
         const transferRows = bindings.filter(b => b.amount || b.transferAmount);
         const isFinancialQuery = q.includes("transfer") || q.includes("money") || q.includes("volume") || q.includes("transaction") || q.includes("amount") || q.includes("flow");
 
-        if (explicitlyRequestsChart || (isFinancialQuery && transferRows.length >= 2)) {
+        if (requestsBar || (isFinancialQuery && transferRows.length >= 2) || (explicitlyRequestsChart && transferRows.length > 0)) {
             const labels = [];
             const dataValues = [];
             bindings.slice(0, 10).forEach(b => {
@@ -1167,7 +1224,7 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
             `;
         }
 
-        // Chart.js Visualization Card (Bar or Doughnut)
+        // Chart.js Visualization Card (Bar, Doughnut, or Pie)
         return `
             <div class="strategy-reason-badge">
                 <span>💡 Display Strategy: <strong>${strategy.strategyReason}</strong></span>
@@ -1190,21 +1247,23 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
 
     // Initialize Chart.js instance after DOM insertion
     function initializeChartInstance(queryId, strategy) {
-        if (!window.Chart || !strategy || (strategy.type !== "BAR_CHART" && strategy.type !== "DOUGHNUT_CHART")) return;
+        if (!window.Chart || !strategy || (strategy.type !== "BAR_CHART" && strategy.type !== "DOUGHNUT_CHART" && strategy.type !== "PIE_CHART")) return;
         const canvas = document.getElementById(`chart-canvas-${queryId}`);
         if (!canvas) return;
 
         const ctx = canvas.getContext('2d');
         const isCurrency = strategy.isCurrency;
 
-        if (strategy.type === "DOUGHNUT_CHART") {
+        // Pie & Doughnut Chart Support
+        if (strategy.type === "PIE_CHART" || strategy.type === "DOUGHNUT_CHART") {
+            const chartType = strategy.type === "PIE_CHART" ? "pie" : "doughnut";
             const chart = new Chart(ctx, {
-                type: 'doughnut',
+                type: chartType,
                 data: {
                     labels: strategy.labels,
                     datasets: [{
                         data: strategy.dataValues,
-                        backgroundColor: ['#38bdf8', '#4ade80', '#f59e0b', '#ec4899', '#a855f7', '#06b6d4', '#10b981'],
+                        backgroundColor: ['#38bdf8', '#4ade80', '#f59e0b', '#ec4899', '#a855f7', '#06b6d4', '#f43f5e', '#eab308'],
                         borderColor: '#0f172a',
                         borderWidth: 2
                     }]
@@ -1225,7 +1284,16 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
                             titleColor: '#38bdf8',
                             bodyColor: '#f8fafc',
                             borderColor: '#1e293b',
-                            borderWidth: 1
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    let val = context.raw || 0;
+                                    if (isCurrency) {
+                                        return ` Amount: $${val.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD`;
+                                    }
+                                    return ` Count: ${val}`;
+                                }
+                            }
                         }
                     }
                 }
@@ -1391,7 +1459,7 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
         chatFeed.scrollTop = chatFeed.scrollHeight;
 
         // Initialize Chart.js canvas if chart was selected by strategy
-        if (visualStrategy.type === "BAR_CHART" || visualStrategy.type === "DOUGHNUT_CHART") {
+        if (visualStrategy.type === "BAR_CHART" || visualStrategy.type === "DOUGHNUT_CHART" || visualStrategy.type === "PIE_CHART") {
             setTimeout(() => {
                 initializeChartInstance(queryId, visualStrategy);
             }, 50);
