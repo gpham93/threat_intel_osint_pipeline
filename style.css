@@ -807,9 +807,28 @@ table.bindings-table td {
     color: #f8fafc;
 }
 
+/* Strategy Reasoning Badge */
+.strategy-reason-badge {
+    font-size: 0.6rem;
+    color: #94a3b8;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid #1e293b;
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    margin: 0.4rem 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.strategy-reason-badge strong {
+    color: #38bdf8;
+    font-weight: 600;
+}
+
 /* Embedded Interactive Chart Card */
 .embedded-chart-card {
-    margin: 0.75rem 0 0.5rem 0;
+    margin: 0.5rem 0 0.5rem 0;
     background: #020617;
     border: 1px solid #1e293b;
     border-radius: 6px;
@@ -847,6 +866,73 @@ table.bindings-table td {
     padding: 0.75rem;
     height: 220px;
     width: 100%;
+}
+
+/* Target Dossier Card */
+.dossier-card {
+    margin: 0.5rem 0 0.5rem 0;
+    background: #020617;
+    border: 1px solid #334155;
+    border-left: 3px solid #f59e0b;
+    border-radius: 6px;
+    padding: 0.75rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.dossier-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid #1e293b;
+    padding-bottom: 0.4rem;
+}
+
+.dossier-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #f8fafc;
+    letter-spacing: 0.04em;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.dossier-clearance {
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 0.15rem 0.4rem;
+    background: #b91c1c;
+    color: #ffffff;
+    border-radius: 3px;
+    letter-spacing: 0.05em;
+}
+
+.dossier-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-size: 0.7rem;
+}
+
+.dossier-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dossier-label {
+    color: #94a3b8;
+    font-weight: 600;
+    min-width: 120px;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+}
+
+.dossier-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
 }
 
 /* Structured Results Table & Export Toolbar */
