@@ -3,15 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Threat Intelligence OSINT Platform - Refactoring UI Edition</title>
+    <title>Threat Intelligence OSINT Platform - Defense Enterprise Edition</title>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <!-- Vis.js Network -->
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <!-- Chart.js for Interactive Intelligence Visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="style.css?v=9">
+    <link rel="stylesheet" href="style.css?v=10">
 </head>
 <body>
     <!-- Security Classification Banner -->
@@ -20,7 +22,7 @@
     </div>
 
     <div class="app-container">
-        <!-- Compact Header Bar -->
+        <!-- Header Bar -->
         <header class="app-header">
             <div class="logo-area">
                 <div class="logo-text">THREAT INTEL OSINT</div>
@@ -34,11 +36,11 @@
             </div>
         </header>
 
-        <!-- Refactored Grid Layout (Left Metrics Box, Center Graph & Chat, Top Right Ingestion Uploader) -->
+        <!-- Main 3-Column Grid Layout -->
         <main class="refactored-grid">
-            <!-- Left Sidebar: Metrics Box & Controls -->
+            <!-- Left Sidebar: Metrics Box & Graph Controls -->
             <aside class="left-sidebar">
-                <!-- Intelligence Overview Metrics Box (Left Column) -->
+                <!-- Intelligence Overview Metrics Box -->
                 <div class="card metrics-box-card">
                     <div class="card-header">
                         <h2>Intelligence Metrics</h2>
@@ -51,11 +53,11 @@
                         </div>
                         <div class="metric-block">
                             <span class="metric-label">MONITORED VOLUME</span>
-                            <span id="kpi-volume" class="metric-value">$1,500,000</span>
+                            <span id="kpi-volume" class="metric-value">$9.05M</span>
                         </div>
                         <div class="metric-block">
                             <span class="metric-label">RDF TRIPLES</span>
-                            <span id="kpi-triples" class="metric-value">87</span>
+                            <span id="kpi-triples" class="metric-value">138</span>
                         </div>
                         <div class="metric-block">
                             <span class="metric-label">SPARQL LATENCY</span>
@@ -63,7 +65,7 @@
                         </div>
                         <div class="metric-block">
                             <span class="metric-label">NLI CONFIDENCE AVG</span>
-                            <span id="kpi-nli" class="metric-value">99.4%</span>
+                            <span id="kpi-nli" class="metric-value">100.0%</span>
                         </div>
                         <div class="metric-block">
                             <span class="metric-label">SECURITY CLEARANCE</span>
@@ -76,7 +78,7 @@
                     </div>
                 </div>
 
-                <!-- Pathfinder & Controls Box -->
+                <!-- Pathfinder Box -->
                 <div class="card sidebar-controls-card">
                     <div class="card-header">
                         <h2>Link Pathfinder</h2>
@@ -88,15 +90,16 @@
                                 <option value="Actor_VictorBout">Victor Bout (Actor)</option>
                                 <option value="Actor_ElenaRostova">Elena Rostova (Actor)</option>
                                 <option value="Transfer_9901">Transfer $1.5M (Transfer)</option>
-                                <option value="FrontCompany_CLUSTER-101">AeroVanguard Logistics</option>
+                                <option value="FrontCompany_AeroVanguard">AeroVanguard Logistics</option>
                             </select>
                         </div>
                         <div class="select-group">
                             <label class="control-label">Destination Entity:</label>
                             <select id="path-end" class="path-select">
+                                <option value="FrontCompany_HeliosEnergy">Helios Energy Trading</option>
+                                <option value="FrontCompany_Caspian">Caspian Merchant Fleet</option>
                                 <option value="Actor_ElenaRostova">Elena Rostova (Actor)</option>
                                 <option value="Actor_VictorBout">Victor Bout (Actor)</option>
-                                <option value="FrontCompany_CLUSTER-102">Helios Energy Trading</option>
                             </select>
                         </div>
                         <button id="btn-find-path" class="btn-secondary w-full">FIND SHORTEST PATH</button>
@@ -104,7 +107,7 @@
                     </div>
                 </div>
 
-                <!-- 4D Temporal & Cutoff Controls -->
+                <!-- Graph & Temporal Controls -->
                 <div class="card sidebar-controls-card">
                     <div class="card-header">
                         <h2>Graph Controls</h2>
@@ -130,23 +133,36 @@
                 </div>
             </aside>
 
-            <!-- Center Stage: Main Threat Network Graph & Conversational Interface -->
+            <!-- Center Stage: Main Threat Network Graph & Conversational Assistant -->
             <section class="center-stage">
-                <!-- Prominent Threat Network Graph Visualizer -->
+                <!-- Threat Network Graph Visualizer -->
                 <div class="card graph-stage-card">
                     <div class="card-header">
-                        <h2>Threat Network Graph Visualizer</h2>
-                        <button id="btn-export-png" class="btn-secondary">EXPORT GRAPH (PNG)</button>
+                        <h2>Threat Network Graph Visualizer (BFO / CCO Semantic Topology)</h2>
+                        <div class="graph-legend">
+                            <span class="legend-item"><span class="legend-dot dot-actor"></span> Threat Actor</span>
+                            <span class="legend-item"><span class="legend-dot dot-company"></span> Front Company</span>
+                            <span class="legend-item"><span class="legend-dot dot-transfer"></span> Money Transfer</span>
+                            <button id="btn-export-png" class="btn-secondary btn-sm" style="margin-left: 0.5rem;">EXPORT PNG</button>
+                        </div>
                     </div>
                     <div id="network-canvas"></div>
                 </div>
 
-                <!-- Conversational Analyst Interface -->
+                <!-- Conversational Intelligence Assistant -->
                 <div class="card chat-stage-card">
                     <div class="card-header">
-                        <h2>Conversational Analyst Interface</h2>
+                        <h2>Semantic Intelligence Assistant</h2>
                         <div class="header-actions">
-                            <button id="btn-export-csv" class="btn-secondary">EXPORT RESULTS (CSV)</button>
+                            <select id="llm-provider-select" class="llm-select" title="Select AI Reasoning Engine">
+                                <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash</option>
+                                <option value="gemini-2.5-pro">Gemini 2.5 Pro (Deep Reasoning)</option>
+                                <option value="gpt-4o">OpenAI GPT-4o</option>
+                                <option value="gpt-4o-mini">OpenAI GPT-4o-mini</option>
+                                <option value="ast">Offline: Semantic Graph AST</option>
+                            </select>
+                            <button id="btn-api-settings" class="btn-secondary" title="Configure Cloud LLM API Key">⚙ API KEY</button>
+                            <button id="btn-export-csv" class="btn-secondary">EXPORT CSV</button>
                             <span class="badge-status">SYSTEM ACTIVE</span>
                         </div>
                     </div>
@@ -156,29 +172,29 @@
                         <div class="chat-message message-system">
                             <div class="message-meta">SYSTEM ASSISTANT</div>
                             <div class="message-body">
-                                Refactored Defense Edition GraphRAG Engine active. Type any prompt (e.g. "tell me about Titan Maritime Holdings" or "who is Victor Bout"). Every response includes SPARQL, RDF bindings, and NLI verification scores.
+                                Semantic GraphRAG Engine active. Ask any natural language intelligence question (e.g. "Tell me about Victor Bout", "Which front companies operate in Panama?", or "Plot a bar graph of top money transfers"). Responses provide structured narrative briefings, interactive charts, exportable tables, and verifiable SPARQL/NLI proof traces.
                             </div>
                         </div>
                     </div>
 
-                    <!-- Query Input Form -->
+                    <!-- Query Input Form & Suggestions -->
                     <div class="chat-input-area">
                         <div class="preset-row">
                             <span class="preset-label">Suggested Prompts:</span>
-                            <button class="btn-preset" data-query="Show me all money transfers over $10k linked to Front Company A">Transfers > $10k</button>
-                            <button class="btn-preset" data-query="Find all front companies and their sanction identifiers">Front Companies</button>
-                            <button class="btn-preset" data-query="Which threat actors are associated with front companies?">Threat Actors</button>
-                            <button class="btn-preset" data-query="Identify front companies in secrecy jurisdictions (Panama, Cyprus, Cayman Islands)">Secrecy Jurisdictions</button>
+                            <button class="btn-preset" data-query="Plot a bar graph of all money transfers by volume">📊 Bar Graph: Transfers</button>
+                            <button class="btn-preset" data-query="Which front companies operate in Panama?">Panama Network</button>
+                            <button class="btn-preset" data-query="Tell me about Victor Bout">Victor Bout Profile</button>
+                            <button class="btn-preset" data-query="Show all money transfers over 10k">Transfers &gt; $10k</button>
                         </div>
                         <div class="input-form">
-                            <input type="text" id="chat-input" placeholder="Type an analyst query (e.g. tell me about Titan Maritime Holdings)..." autocomplete="off">
+                            <input type="text" id="chat-input" placeholder="Type an analyst query (e.g. Plot a bar graph of money transfers or Tell me about Victor Bout)..." autocomplete="off">
                             <button id="btn-send" class="btn-primary">SUBMIT QUERY</button>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Right Column: Document Uploader (Top Right) & Sample Test Reports -->
+            <!-- Right Sidebar: Document Uploader (Top Right) & Sample Test Reports -->
             <aside class="right-sidebar">
                 <!-- Event-Driven OSINT Ingestion Uploader (TOP RIGHT) -->
                 <div class="card uploader-topright-card">
@@ -224,9 +240,35 @@
         </div>
     </div>
 
+    <!-- Cloud LLM API Key Settings Modal -->
+    <div id="api-modal-overlay" class="modal-overlay hidden">
+        <div class="modal-card api-settings-card">
+            <div class="modal-header">
+                <h3>Cloud LLM API Settings</h3>
+                <button id="btn-api-modal-close" class="btn-close">X</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-intro">Configure your Cloud LLM API Keys to enable real-time NL-to-SPARQL translation and executive intelligence narrative synthesis. Keys are stored locally in your browser session.</p>
+                <div class="form-group">
+                    <label for="gemini-key-input">Google Gemini API Key:</label>
+                    <input type="password" id="gemini-key-input" placeholder="AIzaSy..." class="input-text">
+                </div>
+                <div class="form-group">
+                    <label for="openai-key-input">OpenAI API Key (Optional):</label>
+                    <input type="password" id="openai-key-input" placeholder="sk-proj-..." class="input-text">
+                </div>
+                <div class="modal-actions">
+                    <button id="btn-save-keys" class="btn-primary">SAVE CONFIGURATION</button>
+                    <button id="btn-clear-keys" class="btn-secondary">CLEAR KEYS</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Notification Toast Container -->
     <div id="toast-container" class="toast-container"></div>
 
-    <script src="app.js?v=9"></script>
+    <!-- Application Script -->
+    <script src="app.js?v=10"></script>
 </body>
 </html>

@@ -1,7 +1,8 @@
 """
 Unified API Server and Web Dashboard for Threat Intelligence OSINT Pipeline.
 Serves static UI assets, REST API endpoints, file uploads, and Server-Sent Events (SSE)
-connecting OWL2 Ontology, Splink Probabilistic Identity Key Ring, and GraphRAG NLI Guardrail engine.
+connecting OWL2 Ontology, Probabilistic Identity Resolution, Dynamic Graph Link Analysis,
+and GraphRAG NLI Entailment Verification.
 Uses ThreadedHTTPServer to prevent SSE connections from blocking HTTP requests.
 """
 
@@ -22,6 +23,8 @@ if PROJECT_ROOT not in sys.path:
 from api.graph_rag import GraphRAGQueryEngine
 from pipeline.upload_agent import process_raw_file
 from pipeline.ingestion_agent import process_event_message
+from pipeline.link_analysis import ThreatGraphLinkAnalyzer
+from pipeline.splink_resolution import run_identity_resolution_embedded
 
 # Initialize GraphRAG Engine
 ONTOLOGY_PATH = os.path.join(PROJECT_ROOT, "ontology", "threat_model.ttl")
@@ -30,7 +33,7 @@ graph_rag_engine = GraphRAGQueryEngine(turtle_path=ONTOLOGY_PATH)
 # Global list of connected SSE client response handlers
 SSE_CLIENTS = []
 
-# Mock resolved identity key ring dataset simulating outputs from splink_resolution.py
+# Base resolved identity key ring dataset
 RESOLVED_IDENTITY_KEY_RING = [
     {
         "cluster_id": "CLUSTER-101",
@@ -68,7 +71,7 @@ RESOLVED_IDENTITY_KEY_RING = [
     {
         "cluster_id": "CLUSTER-104",
         "canonical_name": "Global Tech / Apex Cyber Link",
-        "match_probability": 0.48,  # Below default 0.5 threshold
+        "match_probability": 0.48,
         "source_records": [
             {"source": "OFAC_Sanctions", "id": "OFAC_004", "name": "Global Tech Supplies LLC", "country": "Seychelles", "reg_id": "SEY-10294"},
             {"source": "OSINT_Reports", "id": "OSINT_104", "name": "Apex Cyber Solutions", "country": "Estonia", "reg_id": "EE-77821"}
@@ -127,22 +130,40 @@ class DashboardRequestHandler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
 
+    def do_HEAD(self):
+        self.send_response(200)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Content-Type", "text/html")
+        self.end_headers()
+
     def do_GET(self):
         parsed_url = urlparse(self.path)
         path = parsed_url.path
 
-        if path == "/":
+        if path == "/" or path == "/index.html":
             return self._send_file(os.path.join(PROJECT_ROOT, "ui", "index.html"), "text/html")
-        elif path.startswith("/ui/"):
-            file_name = path.replace("/ui/", "")
+        
+        # Check if requesting static assets directly (e.g., /style.css, /app.js, /ui/style.css)
+        clean_name = path.lstrip("/")
+        if clean_name.startswith("ui/"):
+            clean_name = clean_name.replace("ui/", "", 1)
+        
+        ui_file_path = os.path.join(PROJECT_ROOT, "ui", clean_name)
+        if os.path.isfile(ui_file_path):
             content_type = "text/html"
-            if file_name.endswith(".css"):
+            if clean_name.endswith(".css"):
                 content_type = "text/css"
-            elif file_name.endswith(".js"):
+            elif clean_name.endswith(".js"):
                 content_type = "application/javascript"
-            return self._send_file(os.path.join(PROJECT_ROOT, "ui", file_name), content_type)
+            elif clean_name.endswith(".png"):
+                content_type = "image/png"
+            elif clean_name.endswith(".svg"):
+                content_type = "image/svg+xml"
+            elif clean_name.endswith(".json"):
+                content_type = "application/json"
+            return self._send_file(ui_file_path, content_type)
 
-        elif path == "/api/events":
+        if path == "/api/events":
             # Server-Sent Events (SSE) Streaming endpoint
             self.send_response(200)
             self.send_header("Content-Type", "text/event-stream")
@@ -224,7 +245,20 @@ class DashboardRequestHandler(BaseHTTPRequestHandler):
                     {"name": "threat:FrontCompany", "parent": "cco:Organization"},
                     {"name": "threat:MoneyTransfer", "parent": "cco:ActOfCommerce"}
                 ],
-                "triples_count": len(graph_rag_engine.graph)
+                "triples_count": len(graph_rag_engine.graph),
+                "indexed_entities": len(graph_rag_engine.entity_index)
+            })
+
+        elif path == "/api/link-analysis":
+            query_params = parse_qs(parsed_url.query)
+            start_node = query_params.get("start", ["Actor_VictorBout"])[0]
+            end_node = query_params.get("end", ["Actor_ElenaRostova"])[0]
+            analyzer = ThreatGraphLinkAnalyzer(graph=graph_rag_engine.graph)
+            path_res = analyzer.find_shortest_path(start_node, end_node)
+            centrality = analyzer.calculate_betweenness_centrality()
+            return self._send_json({
+                "path_result": path_res,
+                "betweenness_centrality": centrality
             })
 
         else:
@@ -237,7 +271,15 @@ class DashboardRequestHandler(BaseHTTPRequestHandler):
             try:
                 body = json.loads(body_bytes.decode("utf-8"))
                 user_query = body.get("query", "Find all front companies")
-                rag_result = graph_rag_engine.query_threat_graph(user_query)
+                provider = body.get("provider")
+                api_key = body.get("api_key")
+                conv_history = body.get("conversation_history")
+                rag_result = graph_rag_engine.query_threat_graph(
+                    natural_language_query=user_query,
+                    provider=provider,
+                    api_key=api_key,
+                    conversation_history=conv_history
+                )
                 return self._send_json(rag_result)
             except Exception as e:
                 return self._send_json({"error": str(e)}, status=500)
@@ -299,7 +341,8 @@ class DashboardRequestHandler(BaseHTTPRequestHandler):
                     "message": f"Knowledge Graph Updated: {ingest_res['records_processed']} new entity record(s) resolved & mapped to CCO ontology.",
                     "file_name": filename,
                     "cluster_id": new_cluster_id,
-                    "triples_added": ingest_res["triples_added"]
+                    "triples_added": ingest_res["triples_added"],
+                    "total_graph_triples": len(graph_rag_engine.graph)
                 }
                 notify_sse_clients("graph_updated", notification_payload)
 

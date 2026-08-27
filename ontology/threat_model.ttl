@@ -9,38 +9,166 @@
 <http://example.org/threat> a owl:Ontology ;
     rdfs:label "Threat Network Ontology" ;
     rdfs:comment "Strict OWL2 Ontology representing a threat intelligence network importing BFO and CCO namespaces." ;
-    owl:imports bfo:bfo.owl,
-        cco:UpperOntology .
+    owl:imports bfo:bfo.owl, cco:UpperOntology .
 
-threat:Actor_AlexanderPetrov a threat:ThreatActor ;
-    rdfs:label "Alexander Petrov" ;
-    threat:associatedWith threat:FrontCompany_Ingested_KY_99104 .
-
-threat:Actor_DmitryVolkov a threat:ThreatActor ;
-    rdfs:label "Dmitry Volkov" ;
-    threat:associatedWith threat:FrontCompany_Ingested_MH_88120 .
-
-threat:Actor_ElenaRostova a threat:ThreatActor ;
-    rdfs:label "Elena Rostova" ;
-    threat:associatedWith threat:FrontCompany_HeliosEnergy,
-        threat:FrontCompany_Ingested_CY_99412,
-        threat:FrontCompany_Ingested_REG_88201 .
-
+# Threat Actors
 threat:Actor_VictorBout a threat:ThreatActor ;
     rdfs:label "Victor Bout" ;
     threat:aliasName "Merchant of Death" ;
+    cco:has_clearance_level "SECRET" ;
     threat:associatedWith threat:FrontCompany_AeroVanguard,
-        threat:FrontCompany_Ingested_MH_44910,
-        threat:FrontCompany_Ingested_REG_88201 .
+        threat:FrontCompany_TitanMaritime,
+        threat:FrontCompany_ZephyrShipping .
 
+threat:Actor_ElenaRostova a threat:ThreatActor ;
+    rdfs:label "Elena Rostova" ;
+    threat:aliasName "Operator Red" ;
+    cco:has_clearance_level "TOP SECRET" ;
+    threat:associatedWith threat:FrontCompany_HeliosEnergy,
+        threat:FrontCompany_NexusGlobal .
+
+threat:Actor_DmitryVolkov a threat:ThreatActor ;
+    rdfs:label "Dmitry Volkov" ;
+    threat:aliasName "Viper" ;
+    cco:has_clearance_level "SECRET" ;
+    threat:associatedWith threat:FrontCompany_Caspian .
+
+threat:Actor_AlexanderPetrov a threat:ThreatActor ;
+    rdfs:label "Alexander Petrov" ;
+    threat:aliasName "Ghost" ;
+    cco:has_clearance_level "UNCLASSIFIED" ;
+    threat:associatedWith threat:FrontCompany_GlobalApex,
+        threat:FrontCompany_KryptonMaritime .
+
+# Front Companies & Shell Organizations
+threat:FrontCompany_AeroVanguard a threat:FrontCompany ;
+    rdfs:label "AeroVanguard Logistics Ltd" ;
+    threat:sanctionID "OFAC-2026-8812" ;
+    threat:jurisdiction "Panama" ;
+    threat:swiftBIC "AVLOGPA22" ;
+    rdfs:comment "Panamanian logistics front used for illicit weapons cargo and sanction evasion." .
+
+threat:FrontCompany_HeliosEnergy a threat:FrontCompany ;
+    rdfs:label "Helios Energy Trading Corp" ;
+    threat:sanctionID "OFAC-2026-9941" ;
+    threat:jurisdiction "Cyprus" ;
+    threat:swiftBIC "HELIOCY22" ;
+    rdfs:comment "Cyprus-registered energy broker laundering illicit commodities revenue." .
+
+threat:FrontCompany_Caspian a threat:FrontCompany ;
+    rdfs:label "Caspian Merchant Fleet Co" ;
+    threat:sanctionID "OFAC-2026-4410" ;
+    threat:jurisdiction "UAE" ;
+    threat:swiftBIC "CASPDXB44" ;
+    rdfs:comment "Maritime maritime transport network operating out of Dubai / JAFZA." .
+
+threat:FrontCompany_TitanMaritime a threat:FrontCompany ;
+    rdfs:label "Titan Maritime Holdings" ;
+    threat:sanctionID "OFAC-2026-3091" ;
+    threat:jurisdiction "Panama" ;
+    threat:swiftBIC "TITANPA99" ;
+    rdfs:comment "Primary offshore financing vehicle registered in Panama." .
+
+threat:FrontCompany_ZephyrShipping a threat:FrontCompany ;
+    rdfs:label "Zephyr Maritime Shipping Corp" ;
+    threat:sanctionID "OFAC-2026-4491" ;
+    threat:jurisdiction "Marshall Islands" ;
+    threat:swiftBIC "ZEPYMH11" ;
+    rdfs:comment "Shell fleet provider operating under flags of convenience." .
+
+threat:FrontCompany_NexusGlobal a threat:FrontCompany ;
+    rdfs:label "Nexus Global Holdings Corp" ;
+    threat:sanctionID "OFAC-2026-9912" ;
+    threat:jurisdiction "Panama" ;
+    threat:swiftBIC "NEXGPA55" ;
+    rdfs:comment "Panamanian asset holding firm linked to Elena Rostova." .
+
+threat:FrontCompany_GlobalApex a threat:FrontCompany ;
+    rdfs:label "Apex Cyber Solutions" ;
+    threat:sanctionID "OFAC-2026-7782" ;
+    threat:jurisdiction "Estonia" ;
+    threat:swiftBIC "APEXEE21" ;
+    rdfs:comment "Cyber procurement shell firm facilitating dark web infrastructure." .
+
+threat:FrontCompany_KryptonMaritime a threat:FrontCompany ;
+    rdfs:label "Krypton Maritime Operations Ltd" ;
+    threat:sanctionID "OFAC-2026-9910" ;
+    threat:jurisdiction "Cayman Islands" ;
+    threat:swiftBIC "KRYPKY88" ;
+    rdfs:comment "Offshore trust and maritime leasing company in George Town." .
+
+# Money Transfers & Financial Routing
 threat:Transfer_9901 a threat:MoneyTransfer ;
+    rdfs:label "Wire Transfer $1.5M (AeroVanguard -> Helios Energy)" ;
     threat:hasAmount 1500000.0 ;
     threat:hasCurrency "USD" ;
+    threat:has_sender threat:FrontCompany_AeroVanguard ;
     threat:has_receiver threat:FrontCompany_HeliosEnergy ;
-    threat:has_sender threat:FrontCompany_AeroVanguard .
+    rdfs:comment "Sanctioned payment for illicit logistics forwarding in Cyprus." .
+
+threat:Transfer_9902 a threat:MoneyTransfer ;
+    rdfs:label "Wire Transfer $850K (Helios Energy -> Caspian Fleet)" ;
+    threat:hasAmount 850000.0 ;
+    threat:hasCurrency "USD" ;
+    threat:has_sender threat:FrontCompany_HeliosEnergy ;
+    threat:has_receiver threat:FrontCompany_Caspian ;
+    rdfs:comment "Bunkering and maritime transport settlement in UAE." .
+
+threat:Transfer_9903 a threat:MoneyTransfer ;
+    rdfs:label "Wire Transfer $3.2M (Titan Maritime -> AeroVanguard)" ;
+    threat:hasAmount 3200000.0 ;
+    threat:hasCurrency "USD" ;
+    threat:has_sender threat:FrontCompany_TitanMaritime ;
+    threat:has_receiver threat:FrontCompany_AeroVanguard ;
+    rdfs:comment "Offshore liquidity injection into Panamanian operations." .
+
+threat:Transfer_9904 a threat:MoneyTransfer ;
+    rdfs:label "Wire Transfer $1.1M (Caspian Fleet -> Apex Cyber)" ;
+    threat:hasAmount 1100000.0 ;
+    threat:hasCurrency "USD" ;
+    threat:has_sender threat:FrontCompany_Caspian ;
+    threat:has_receiver threat:FrontCompany_GlobalApex ;
+    rdfs:comment "Cyber surveillance hardware procurement in Tallinn, Estonia." .
+
+threat:Transfer_9905 a threat:MoneyTransfer ;
+    rdfs:label "Wire Transfer $2.4M (Nexus Global -> Titan Maritime)" ;
+    threat:hasAmount 2400000.0 ;
+    threat:hasCurrency "USD" ;
+    threat:has_sender threat:FrontCompany_NexusGlobal ;
+    threat:has_receiver threat:FrontCompany_TitanMaritime ;
+    rdfs:comment "Inter-entity holding transfer between Panama shell entities." .
+
+# Schema Properties & Upper Ontology Mappings
+threat:ThreatActor a owl:Class ;
+    rdfs:label "Threat Actor" ;
+    rdfs:subClassOf cco:Person .
+
+threat:FrontCompany a owl:Class ;
+    rdfs:label "Front Company" ;
+    rdfs:subClassOf cco:Organization .
+
+threat:MoneyTransfer a owl:Class ;
+    rdfs:label "Money Transfer" ;
+    rdfs:subClassOf cco:ActOfCommerce .
 
 threat:aliasName a owl:DatatypeProperty ;
+    rdfs:label "alias name" ;
     rdfs:domain cco:Person ;
+    rdfs:range xsd:string .
+
+threat:sanctionID a owl:DatatypeProperty ;
+    rdfs:label "sanction identifier" ;
+    rdfs:domain cco:Organization ;
+    rdfs:range xsd:string .
+
+threat:jurisdiction a owl:DatatypeProperty ;
+    rdfs:label "jurisdiction" ;
+    rdfs:domain cco:Organization ;
+    rdfs:range xsd:string .
+
+threat:swiftBIC a owl:DatatypeProperty ;
+    rdfs:label "SWIFT BIC" ;
+    rdfs:domain cco:Organization ;
     rdfs:range xsd:string .
 
 threat:associatedWith a owl:ObjectProperty ;
@@ -49,89 +177,21 @@ threat:associatedWith a owl:ObjectProperty ;
     rdfs:range threat:FrontCompany .
 
 threat:hasAmount a owl:DatatypeProperty ;
+    rdfs:label "has amount" ;
     rdfs:domain threat:MoneyTransfer ;
     rdfs:range xsd:decimal .
 
 threat:hasCurrency a owl:DatatypeProperty ;
+    rdfs:label "has currency" ;
     rdfs:domain threat:MoneyTransfer ;
     rdfs:range xsd:string .
 
-threat:has_receiver a owl:ObjectProperty ;
-    rdfs:label "has receiver" ;
-    rdfs:subPropertyOf threat:has_agent .
-
 threat:has_sender a owl:ObjectProperty ;
     rdfs:label "has sender" ;
-    rdfs:subPropertyOf threat:has_agent .
+    rdfs:domain threat:MoneyTransfer ;
+    rdfs:range threat:FrontCompany .
 
-threat:sanctionID a owl:DatatypeProperty ;
-    rdfs:domain cco:Organization ;
-    rdfs:range xsd:string .
-
-threat:FrontCompany_Ingested_CY_99412 a threat:FrontCompany ;
-    rdfs:label "Nexus Global Holdings Corp" ;
-    threat:sanctionID "CY-99412" .
-
-threat:FrontCompany_Ingested_KY_99104 a threat:FrontCompany ;
-    rdfs:label "Krypton Maritime Operations Ltd" ;
-    threat:sanctionID "KY-99104" .
-
-threat:FrontCompany_Ingested_MH_44910 a threat:FrontCompany ;
-    rdfs:label "Zephyr Maritime Shipping Corp" ;
-    threat:sanctionID "MH-44910" .
-
-threat:FrontCompany_Ingested_MH_88120 a threat:FrontCompany ;
-    rdfs:label "Vanguard Transoceanic Logistics" ;
-    threat:sanctionID "MH-88120" .
-
-cco:has_agent a owl:ObjectProperty .
-
-threat:FrontCompany_AeroVanguard a threat:FrontCompany ;
-    rdfs:label "AeroVanguard Logistics Ltd" ;
-    threat:sanctionID "OFAC-2026-8812" .
-
-threat:FrontCompany_HeliosEnergy a threat:FrontCompany ;
-    rdfs:label "Helios Energy Trading Corp" .
-
-threat:FrontCompany_Ingested_REG_88201 a threat:FrontCompany ;
-    rdfs:label "AeroVanguard Logistics Ltd",
-        "Orion Defense Logistics LLC" ;
-    threat:sanctionID "REG-88201" .
-
-cco:ActOfCommerce a owl:Class ;
-    rdfs:subClassOf [ a owl:Restriction ;
-            owl:onProperty threat:has_agent ;
-            owl:someValuesFrom [ a owl:Class ;
-                    owl:unionOf ( cco:Person cco:Organization ) ] ] .
-
-threat:MoneyTransfer a owl:Class ;
-    rdfs:label "Money Transfer" ;
-    rdfs:comment "An act of commerce involving monetary transaction between threat network entities." ;
-    rdfs:subClassOf [ a owl:Restriction ;
-            owl:onProperty threat:has_agent ;
-            owl:someValuesFrom [ a owl:Class ;
-                    owl:unionOf ( cco:Person cco:Organization ) ] ],
-        cco:ActOfCommerce .
-
-threat:has_agent a owl:ObjectProperty ;
-    rdfs:label "has agent" ;
-    rdfs:comment "Relates an act (such as ActOfCommerce or MoneyTransfer) to an agent (Person or Organization)." ;
-    rdfs:domain cco:ActOfCommerce ;
-    rdfs:range [ a owl:Class ;
-            owl:unionOf ( cco:Person cco:Organization ) ] ;
-    rdfs:subPropertyOf cco:has_agent .
-
-threat:ThreatActor a owl:Class ;
-    rdfs:label "Threat Actor" ;
-    rdfs:comment "An individual person identified as a threat actor or malicious agent." ;
-    rdfs:subClassOf cco:Person .
-
-cco:Organization a owl:Class .
-
-cco:Person a owl:Class .
-
-threat:FrontCompany a owl:Class ;
-    rdfs:label "Front Company" ;
-    rdfs:comment "An organization acting as a shell or front company for illicit activities." ;
-    rdfs:subClassOf cco:Organization .
-
+threat:has_receiver a owl:ObjectProperty ;
+    rdfs:label "has receiver" ;
+    rdfs:domain threat:MoneyTransfer ;
+    rdfs:range threat:FrontCompany .
