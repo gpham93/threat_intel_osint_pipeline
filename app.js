@@ -1047,8 +1047,149 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
         });
     };
 
-    // Global chart instances registry
-    window.chartInstances = {};
+    // Global visualizer instances registry
+    window.visualizerInstances = {};
+    window.querySubgraphRegistry = {};
+
+    // Helper to build visual graph nodes & edges from query bindings
+    function extractSubgraphFromBindings(bindings) {
+        const nodesMap = new Map();
+        const edges = [];
+        let edgeIdCounter = 1;
+
+        bindings.forEach((b, rowIdx) => {
+            // 1. Threat Actors
+            const actorName = b.actorLabel || b.actor1Label || b.senderActorLabel || (b.actor ? b.actor.split("#").pop() : null);
+            if (actorName) {
+                const actorId = `actor_${actorName.replace(/\s+/g, '_')}`;
+                if (!nodesMap.has(actorId)) {
+                    nodesMap.set(actorId, {
+                        id: actorId,
+                        label: `${actorName}\n(Threat Actor)`,
+                        color: { background: '#ef4444', border: '#ffffff' },
+                        shape: 'dot',
+                        size: 16,
+                        font: { color: '#f8fafc', face: 'Inter', size: 10 }
+                    });
+                }
+            }
+
+            // 2. Front Companies / Organizations
+            const comp1 = b.companyLabel || b.company1Label || b.senderCompanyLabel || b.label;
+            if (comp1) {
+                const comp1Id = `comp_${comp1.replace(/\s+/g, '_')}`;
+                const juris1 = b.jurisdiction ? `\n[${b.jurisdiction}]` : '';
+                if (!nodesMap.has(comp1Id)) {
+                    nodesMap.set(comp1Id, {
+                        id: comp1Id,
+                        label: `${comp1}${juris1}`,
+                        color: { background: '#38bdf8', border: '#ffffff' },
+                        shape: 'dot',
+                        size: 14,
+                        font: { color: '#f8fafc', face: 'Inter', size: 10 }
+                    });
+                }
+
+                // Connect Actor to Comp1
+                if (actorName) {
+                    const actorId = `actor_${actorName.replace(/\s+/g, '_')}`;
+                    edges.push({
+                        id: `sub_e_${edgeIdCounter++}`,
+                        from: actorId,
+                        to: comp1Id,
+                        label: 'associatedWith',
+                        color: { color: '#94a3b8' },
+                        font: { color: '#94a3b8', size: 8, strokeWidth: 0 },
+                        arrows: 'to'
+                    });
+                }
+            }
+
+            // 3. Counterparty Front Company / Beneficiary
+            const comp2 = b.company2Label || b.targetCompanyLabel || b.receiverLabel;
+            if (comp2 && comp2 !== comp1) {
+                const comp2Id = `comp_${comp2.replace(/\s+/g, '_')}`;
+                if (!nodesMap.has(comp2Id)) {
+                    nodesMap.set(comp2Id, {
+                        id: comp2Id,
+                        label: `${comp2}\n(Counterparty)`,
+                        color: { background: '#06b6d4', border: '#ffffff' },
+                        shape: 'dot',
+                        size: 14,
+                        font: { color: '#f8fafc', face: 'Inter', size: 10 }
+                    });
+                }
+
+                // Second Actor (if multi-hop connection)
+                const actor2 = b.actor2Label;
+                if (actor2) {
+                    const actor2Id = `actor_${actor2.replace(/\s+/g, '_')}`;
+                    if (!nodesMap.has(actor2Id)) {
+                        nodesMap.set(actor2Id, {
+                            id: actor2Id,
+                            label: `${actor2}\n(Threat Actor)`,
+                            color: { background: '#ef4444', border: '#ffffff' },
+                            shape: 'dot',
+                            size: 16,
+                            font: { color: '#f8fafc', face: 'Inter', size: 10 }
+                        });
+                    }
+                    edges.push({
+                        id: `sub_e_${edgeIdCounter++}`,
+                        from: actor2Id,
+                        to: comp2Id,
+                        label: 'associatedWith',
+                        color: { color: '#94a3b8' },
+                        font: { color: '#94a3b8', size: 8, strokeWidth: 0 },
+                        arrows: 'to'
+                    });
+                }
+            }
+
+            // 4. Money Transfers
+            const amt = b.amount || b.transferAmount;
+            if (amt && parseFloat(amt) > 0) {
+                const amtFmt = `$${parseFloat(amt).toLocaleString()}`;
+                const transferId = `transfer_${rowIdx}_${Date.now()}`;
+                nodesMap.set(transferId, {
+                    id: transferId,
+                    label: `${amtFmt}\n(Wire Transfer)`,
+                    color: { background: '#f59e0b', border: '#ffffff' },
+                    shape: 'dot',
+                    size: 12,
+                    font: { color: '#fbbf24', face: 'JetBrains Mono', size: 9 }
+                });
+
+                if (comp1) {
+                    edges.push({
+                        id: `sub_e_${edgeIdCounter++}`,
+                        from: transferId,
+                        to: `comp_${comp1.replace(/\s+/g, '_')}`,
+                        label: 'has_sender',
+                        color: { color: '#fbbf24' },
+                        font: { color: '#fbbf24', size: 8, strokeWidth: 0 },
+                        arrows: 'to'
+                    });
+                }
+                if (comp2) {
+                    edges.push({
+                        id: `sub_e_${edgeIdCounter++}`,
+                        from: transferId,
+                        to: `comp_${comp2.replace(/\s+/g, '_')}`,
+                        label: 'has_receiver',
+                        color: { color: '#fbbf24' },
+                        font: { color: '#fbbf24', size: 8, strokeWidth: 0 },
+                        arrows: 'to'
+                    });
+                }
+            }
+        });
+
+        return {
+            nodes: Array.from(nodesMap.values()),
+            edges: edges
+        };
+    }
 
     // Intelligent Visualization Decision Engine
     function determineVisualizationStrategy(bindings, queryText) {
@@ -1062,9 +1203,7 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
         const requestsPie = q.includes("pie") || q.includes("piechart") || q.includes("pie-chart");
         const requestsDoughnut = q.includes("doughnut") || q.includes("donut");
         const requestsBar = q.includes("bar") || q.includes("bargraph") || q.includes("bar-graph") || q.includes("histogram");
-        const requestsChartGeneric = q.includes("chart") || q.includes("plot") || q.includes("visualize") || q.includes("graph") || q.includes("distribution") || q.includes("breakdown");
-
-        const explicitlyRequestsChart = requestsPie || requestsDoughnut || requestsBar || requestsChartGeneric;
+        const requestsChartGeneric = q.includes("chart") || q.includes("plot") || q.includes("histogram") || q.includes("distribution") || q.includes("breakdown");
 
         // 1. Explicit Pie or Doughnut Chart Request
         if (requestsPie || requestsDoughnut) {
@@ -1073,7 +1212,6 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
             let isCurrency = false;
             let title = requestsPie ? "PROPORTIONAL BREAKDOWN (PIE CHART)" : "PROPORTIONAL BREAKDOWN (DOUGHNUT CHART)";
 
-            // Extract from jurisdictions if present
             if (bindings.some(b => b.jurisdiction)) {
                 title = requestsPie ? "OFFSHORE JURISDICTION PROPORTIONS (PIE CHART)" : "OFFSHORE JURISDICTION PROPORTIONS (DOUGHNUT)";
                 const counts = {};
@@ -1083,9 +1221,7 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
                 });
                 labels = Object.keys(counts);
                 dataValues = Object.values(counts);
-            }
-            // Extract from wire transfers if present
-            else if (bindings.some(b => b.amount || b.transferAmount)) {
+            } else if (bindings.some(b => b.amount || b.transferAmount)) {
                 title = requestsPie ? "FINANCIAL WIRE ALLOCATION (PIE CHART)" : "FINANCIAL WIRE ALLOCATION (DOUGHNUT)";
                 isCurrency = true;
                 bindings.slice(0, 8).forEach(b => {
@@ -1095,14 +1231,6 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
                         labels.push(s);
                         dataValues.push(val);
                     }
-                });
-            }
-            // Fallback: group by entity names / labels
-            else {
-                bindings.slice(0, 8).forEach((b, idx) => {
-                    const name = (b.label || b.companyLabel || b.actorLabel || b.entity || `Entity ${idx+1}`).split("#").pop();
-                    labels.push(name);
-                    dataValues.push(1);
                 });
             }
 
@@ -1118,7 +1246,7 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
             }
         }
 
-        // 2a. Jurisdiction Transfer Activity & Financial Ranking (e.g. "which jurisdiction has the most transfer activity?")
+        // 2a. Jurisdiction Transfer Activity & Financial Ranking (Bar Chart)
         const isJurisdictionQuery = q.includes("jurisdiction") || q.includes("country") || q.includes("countries") || q.includes("secrecy");
         const isTransferQuery = q.includes("transfer") || q.includes("trsnasfer") || q.includes("money") || q.includes("transaction") || q.includes("volume") || q.includes("activty") || q.includes("activity");
         const isRankingQuery = q.includes("most") || q.includes("highest") || q.includes("top") || q.includes("rank") || q.includes("ranking") || q.includes("largest");
@@ -1146,11 +1274,8 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
             }
         }
 
-        // 2b. Financial Aggregation / Multi-transfer comparison (Bar Chart)
-        const transferRows = bindings.filter(b => b.amount || b.transferAmount);
-        const isFinancialQuery = q.includes("transfer") || q.includes("money") || q.includes("volume") || q.includes("transaction") || q.includes("amount") || q.includes("flow");
-
-        if (requestsBar || (isFinancialQuery && transferRows.length >= 2) || (explicitlyRequestsChart && transferRows.length > 0)) {
+        // 2b. Explicit Bar Chart Request
+        if (requestsBar) {
             const labels = [];
             const dataValues = [];
             bindings.slice(0, 10).forEach(b => {
@@ -1168,7 +1293,7 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
                 return {
                     type: "BAR_CHART",
                     title: "FINANCIAL WIRE TRANSFER VOLUME (USD)",
-                    strategyReason: "Quantitative Ranked Bar Chart selected based on multi-entity transfer volume comparison.",
+                    strategyReason: "Quantitative Ranked Bar Chart selected per explicit analyst request.",
                     labels: labels,
                     dataValues: dataValues,
                     isCurrency: true
@@ -1176,46 +1301,19 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
             }
         }
 
-        // 3. Geographic / Categorical Distribution across multiple distinct jurisdictions
-        const jurisdictions = bindings.map(b => b.jurisdiction).filter(Boolean);
-        const uniqueJurisdictions = Array.from(new Set(jurisdictions));
-        const isJurisdictionComparison = (q.includes("jurisdiction") || q.includes("secrecy") || q.includes("where") || q.includes("breakdown") || explicitlyRequestsChart) && uniqueJurisdictions.length >= 2;
-
-        if (isJurisdictionComparison) {
-            const counts = {};
-            jurisdictions.forEach(j => counts[j] = (counts[j] || 0) + 1);
+        // 3. Multi-Hop & Relational Subgraph Topology Visualizer (Default for Network Queries)
+        const subgraphData = extractSubgraphFromBindings(bindings);
+        if (subgraphData.nodes.length >= 2) {
             return {
-                type: "DOUGHNUT_CHART",
-                title: "OFFSHORE ENTITY DISTRIBUTION BY JURISDICTION",
-                strategyReason: "Proportional Doughnut Chart selected to visualize cross-jurisdiction entity allocation.",
-                labels: Object.keys(counts),
-                dataValues: Object.values(counts),
-                isCurrency: false
+                type: "SUBGRAPH_TOPOLOGY",
+                title: "INTERACTIVE SUBGRAPH TOPOLOGY",
+                strategyReason: `Interactive Subgraph Network Visualizer generated (${subgraphData.nodes.length} entities, ${subgraphData.edges.length} relations).`,
+                nodes: subgraphData.nodes,
+                edges: subgraphData.edges
             };
         }
 
-        // 4. Target Threat Actor / Entity Dossier Profile
-        const isProfileIntent = q.includes("who is") || q.includes("tell me about") || q.includes("profile") || q.includes("dossier") || q.includes("actor") || q.includes("operative");
-        const hasActor = bindings.some(b => b.actor || b.actorLabel || b.alias);
-
-        if (isProfileIntent && hasActor) {
-            const actorName = bindings[0].label || bindings[0].actorLabel || "Target Operative";
-            const alias = bindings[0].alias || "N/A";
-            const clearance = bindings[0].clearance || "SECRET";
-            const companies = Array.from(new Set(bindings.map(b => b.companyLabel || b.company).filter(Boolean)));
-
-            return {
-                type: "DOSSIER_CARD",
-                title: `TARGET DOSSIER: ${actorName.toUpperCase()}`,
-                strategyReason: "Executive Intelligence Dossier selected for target threat actor profiling.",
-                actorName: actorName,
-                alias: alias,
-                clearance: clearance,
-                controlledEntities: companies
-            };
-        }
-
-        // 5. Default: Clean Structured Table only (No redundant bar graphs)
+        // 4. Default: Clean Structured Table
         return {
             type: "TABLE_ONLY",
             strategyReason: "Structured Tabular View selected for direct record lookup."
@@ -1228,31 +1326,23 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
             return "";
         }
 
-        // Dossier Profile Card
-        if (strategy.type === "DOSSIER_CARD") {
-            const chipsHtml = strategy.controlledEntities.map(c => {
-                const cleanC = c.split("#").pop();
-                return `<span class="entity-pill" onclick="focusEntityOnCanvas('${cleanC}')" title="Locate on Canvas">${cleanC}</span>`;
-            }).join("");
-
+        // Embedded Interactive Subgraph Network Card
+        if (strategy.type === "SUBGRAPH_TOPOLOGY") {
+            window.querySubgraphRegistry[queryId] = strategy;
             return `
                 <div class="strategy-reason-badge">
                     <span>💡 Display Strategy: <strong>${strategy.strategyReason}</strong></span>
                 </div>
-                <div class="dossier-card">
-                    <div class="dossier-header-row">
-                        <div class="dossier-title">
-                            <span>🎯 ${strategy.actorName}</span>
-                            ${strategy.alias !== 'N/A' ? `<span style="color: #94a3b8; font-weight: 400; font-size: 0.7rem;">(Alias: ${strategy.alias})</span>` : ''}
+                <div class="embedded-subgraph-card">
+                    <div class="subgraph-header-row">
+                        <div class="subgraph-title">
+                            <span>🕸 ${strategy.title} (${strategy.nodes.length} NODES, ${strategy.edges.length} RELATIONS)</span>
                         </div>
-                        <span class="dossier-clearance">${strategy.clearance}</span>
-                    </div>
-                    <div class="dossier-body">
-                        <div class="dossier-row">
-                            <span class="dossier-label">Controlled Shells:</span>
-                            <div class="dossier-chips">${chipsHtml || '<span style="color: #64748b;">Direct Operative / No Shells</span>'}</div>
+                        <div class="chart-actions">
+                            <button class="btn-export-action" onclick="focusSubgraphOnMainCanvas('${queryId}')" title="Zoom main canvas to this subgraph">📍 FOCUS MAIN CANVAS</button>
                         </div>
                     </div>
+                    <div id="subgraph-canvas-${queryId}" class="subgraph-canvas"></div>
                 </div>
             `;
         }
@@ -1278,16 +1368,60 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
         `;
     }
 
-    // Initialize Chart.js instance after DOM insertion
-    function initializeChartInstance(queryId, strategy) {
-        if (!window.Chart || !strategy || (strategy.type !== "BAR_CHART" && strategy.type !== "DOUGHNUT_CHART" && strategy.type !== "PIE_CHART")) return;
+    // Initialize Chart.js or Vis.js instance after DOM insertion
+    function initializeVisualizerInstance(queryId, strategy) {
+        if (!strategy) return;
+
+        // Initialize Embedded Vis.js Subgraph Network
+        if (strategy.type === "SUBGRAPH_TOPOLOGY") {
+            const container = document.getElementById(`subgraph-canvas-${queryId}`);
+            if (!container || !window.vis) return;
+
+            const data = {
+                nodes: new vis.DataSet(strategy.nodes),
+                edges: new vis.DataSet(strategy.edges)
+            };
+
+            const options = {
+                nodes: {
+                    borderWidth: 2,
+                    shadow: { enabled: true, color: 'rgba(0,0,0,0.6)', size: 8 }
+                },
+                edges: {
+                    width: 1.5,
+                    smooth: { type: 'continuous' }
+                },
+                physics: {
+                    stabilization: { iterations: 120 },
+                    barnesHut: { gravitationalConstant: -1800, springLength: 95 }
+                },
+                interaction: {
+                    hover: true,
+                    zoomView: true,
+                    dragView: true
+                }
+            };
+
+            const subNetwork = new vis.Network(container, data, options);
+            window.visualizerInstances[queryId] = subNetwork;
+
+            subNetwork.on("click", function(params) {
+                if (params.nodes && params.nodes.length > 0) {
+                    const nodeId = params.nodes[0];
+                    const clean = nodeId.replace(/^(actor_|comp_|transfer_)/, "");
+                    focusEntityOnCanvas(clean);
+                }
+            });
+            return;
+        }
+
+        // Initialize Chart.js
         const canvas = document.getElementById(`chart-canvas-${queryId}`);
-        if (!canvas) return;
+        if (!canvas || !window.Chart) return;
 
         const ctx = canvas.getContext('2d');
         const isCurrency = strategy.isCurrency;
 
-        // Pie & Doughnut Chart Support
         if (strategy.type === "PIE_CHART" || strategy.type === "DOUGHNUT_CHART") {
             const chartType = strategy.type === "PIE_CHART" ? "pie" : "doughnut";
             const chart = new Chart(ctx, {
@@ -1317,16 +1451,7 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
                             titleColor: '#38bdf8',
                             bodyColor: '#f8fafc',
                             borderColor: '#1e293b',
-                            borderWidth: 1,
-                            callbacks: {
-                                label: function(context) {
-                                    let val = context.raw || 0;
-                                    if (isCurrency) {
-                                        return ` Amount: $${val.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD`;
-                                    }
-                                    return ` Count: ${val}`;
-                                }
-                            }
+                            borderWidth: 1
                         }
                     }
                 }
@@ -1360,26 +1485,12 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
                         titleColor: '#38bdf8',
                         bodyColor: '#f8fafc',
                         borderColor: '#1e293b',
-                        borderWidth: 1,
-                        callbacks: {
-                            label: function(context) {
-                                let val = context.raw || 0;
-                                if (isCurrency) {
-                                    return ` Amount: $${val.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD`;
-                                }
-                                return ` Count: ${val}`;
-                            }
-                        }
+                        borderWidth: 1
                     }
                 },
                 scales: {
                     x: {
-                        ticks: {
-                            color: '#94a3b8',
-                            font: { family: "'JetBrains Mono', monospace", size: 9 },
-                            maxRotation: 25,
-                            minRotation: 0
-                        },
+                        ticks: { color: '#94a3b8', font: { family: "'JetBrains Mono', monospace", size: 9 }, maxRotation: 25, minRotation: 0 },
                         grid: { color: 'rgba(30, 41, 59, 0.5)' }
                     },
                     y: {
@@ -1403,6 +1514,16 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
 
         window.chartInstances[queryId] = chart;
     }
+
+    // Helper to focus main canvas from embedded mini graph
+    window.focusSubgraphOnMainCanvas = function(queryId) {
+        const strategy = window.querySubgraphRegistry[queryId];
+        if (!strategy || !strategy.nodes) return;
+        const nodeLabels = strategy.nodes.map(n => n.label.split('\n')[0]);
+        if (nodeLabels.length > 0) {
+            focusEntityOnCanvas(nodeLabels[0]);
+        }
+    };
 
     // Export Chart as PNG
     window.exportChartPNG = function(queryId) {
@@ -1491,17 +1612,17 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
         `;
         chatFeed.scrollTop = chatFeed.scrollHeight;
 
-        // Initialize Chart.js canvas if chart was selected by strategy
-        if (visualStrategy.type === "BAR_CHART" || visualStrategy.type === "DOUGHNUT_CHART" || visualStrategy.type === "PIE_CHART") {
+        // Initialize Visualizer (Embedded Subgraph Vis.js or Chart.js)
+        if (visualStrategy && visualStrategy.type !== "NONE" && visualStrategy.type !== "TABLE_ONLY") {
             setTimeout(() => {
-                initializeChartInstance(queryId, visualStrategy);
+                initializeVisualizerInstance(queryId, visualStrategy);
             }, 50);
         }
 
         // Dynamically Synchronize Top Vis.js Canvas Topology with Query Subgraph
         setTimeout(() => {
             syncGraphCanvasWithQueryResults(ragData.raw_bindings || [], queryText);
-        }, 100);
+        }, 120);
     }
 
     // Synchronize Top Vis.js Canvas Topology with Chat Query Results
