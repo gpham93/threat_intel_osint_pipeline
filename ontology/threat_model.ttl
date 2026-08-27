@@ -8,8 +8,76 @@
 
 <http://example.org/threat> a owl:Ontology ;
     rdfs:label "Threat Network Ontology" ;
-    rdfs:comment "Strict OWL2 Ontology representing a threat intelligence network importing BFO and CCO namespaces." ;
+    rdfs:comment "Strict OWL2 Ontology representing a threat intelligence network importing BFO and CCO namespaces with First-Class Jurisdiction Entities." ;
     owl:imports bfo:bfo.owl, cco:UpperOntology .
+
+# Class Hierarchy
+threat:ThreatActor a owl:Class ;
+    rdfs:subClassOf cco:Person ;
+    rdfs:label "Threat Actor" .
+
+threat:FrontCompany a owl:Class ;
+    rdfs:subClassOf cco:Organization ;
+    rdfs:label "Front Company" .
+
+threat:MoneyTransfer a owl:Class ;
+    rdfs:subClassOf cco:ActOfCommerce ;
+    rdfs:label "Money Transfer" .
+
+threat:Jurisdiction a owl:Class ;
+    rdfs:subClassOf cco:GeopoliticalEntity, bfo:BFO_0000004 ;
+    rdfs:label "Jurisdiction" ;
+    rdfs:comment "First-class geopolitical territory, nation-state, or secrecy jurisdiction governing corporate registration." .
+
+# First-Class Jurisdiction Individuals (Nodes)
+threat:Jurisdiction_Panama a threat:Jurisdiction ;
+    rdfs:label "Panama" ;
+    threat:isoCountryCode "PA" ;
+    threat:isSecrecyJurisdiction true ;
+    threat:fatfRiskRating "High" ;
+    rdfs:comment "Primary Central American offshore corporate registration hub." .
+
+threat:Jurisdiction_Cyprus a threat:Jurisdiction ;
+    rdfs:label "Cyprus" ;
+    threat:isoCountryCode "CY" ;
+    threat:isSecrecyJurisdiction true ;
+    threat:fatfRiskRating "Medium" ;
+    rdfs:comment "Mediterranean financial gateway and energy brokering jurisdiction." .
+
+threat:Jurisdiction_UAE a threat:Jurisdiction ;
+    rdfs:label "United Arab Emirates" ;
+    threat:isoCountryCode "AE" ;
+    threat:isSecrecyJurisdiction true ;
+    threat:fatfRiskRating "High" ;
+    rdfs:comment "Middle Eastern free-zone trade and maritime logistics hub (Dubai / JAFZA)." .
+
+threat:Jurisdiction_MarshallIslands a threat:Jurisdiction ;
+    rdfs:label "Marshall Islands" ;
+    threat:isoCountryCode "MH" ;
+    threat:isSecrecyJurisdiction true ;
+    threat:fatfRiskRating "High" ;
+    rdfs:comment "Pacific maritime flag-of-convenience and corporate secrecy register." .
+
+threat:Jurisdiction_CaymanIslands a threat:Jurisdiction ;
+    rdfs:label "Cayman Islands" ;
+    threat:isoCountryCode "KY" ;
+    threat:isSecrecyJurisdiction true ;
+    threat:fatfRiskRating "High" ;
+    rdfs:comment "Caribbean tax haven specialized in shell holding company structures." .
+
+threat:Jurisdiction_Estonia a threat:Jurisdiction ;
+    rdfs:label "Estonia" ;
+    threat:isoCountryCode "EE" ;
+    threat:isSecrecyJurisdiction false ;
+    threat:fatfRiskRating "Low" ;
+    rdfs:comment "Baltic digital technology and cyber services jurisdiction." .
+
+threat:Jurisdiction_Switzerland a threat:Jurisdiction ;
+    rdfs:label "Switzerland" ;
+    threat:isoCountryCode "CH" ;
+    threat:isSecrecyJurisdiction true ;
+    threat:fatfRiskRating "Medium" ;
+    rdfs:comment "European private banking and commodities liquidity jurisdiction." .
 
 # Threat Actors
 threat:Actor_VictorBout a threat:ThreatActor ;
@@ -40,11 +108,12 @@ threat:Actor_AlexanderPetrov a threat:ThreatActor ;
     threat:associatedWith threat:FrontCompany_GlobalApex,
         threat:FrontCompany_KryptonMaritime .
 
-# Front Companies & Shell Organizations
+# Front Companies & Shell Organizations (Linked to Jurisdiction Nodes)
 threat:FrontCompany_AeroVanguard a threat:FrontCompany ;
     rdfs:label "AeroVanguard Logistics Ltd" ;
     threat:sanctionID "OFAC-2026-8812" ;
     threat:jurisdiction "Panama" ;
+    threat:hasJurisdiction threat:Jurisdiction_Panama ;
     threat:swiftBIC "AVLOGPA22" ;
     rdfs:comment "Panamanian logistics front used for illicit weapons cargo and sanction evasion." .
 
@@ -52,6 +121,7 @@ threat:FrontCompany_HeliosEnergy a threat:FrontCompany ;
     rdfs:label "Helios Energy Trading Corp" ;
     threat:sanctionID "OFAC-2026-9941" ;
     threat:jurisdiction "Cyprus" ;
+    threat:hasJurisdiction threat:Jurisdiction_Cyprus ;
     threat:swiftBIC "HELIOCY22" ;
     rdfs:comment "Cyprus-registered energy broker laundering illicit commodities revenue." .
 
@@ -59,139 +129,102 @@ threat:FrontCompany_Caspian a threat:FrontCompany ;
     rdfs:label "Caspian Merchant Fleet Co" ;
     threat:sanctionID "OFAC-2026-4410" ;
     threat:jurisdiction "UAE" ;
+    threat:hasJurisdiction threat:Jurisdiction_UAE ;
     threat:swiftBIC "CASPDXB44" ;
-    rdfs:comment "Maritime maritime transport network operating out of Dubai / JAFZA." .
+    rdfs:comment "Maritime transport network operating out of Dubai / JAFZA." .
 
 threat:FrontCompany_TitanMaritime a threat:FrontCompany ;
     rdfs:label "Titan Maritime Holdings" ;
     threat:sanctionID "OFAC-2026-3091" ;
     threat:jurisdiction "Panama" ;
+    threat:hasJurisdiction threat:Jurisdiction_Panama ;
     threat:swiftBIC "TITANPA99" ;
     rdfs:comment "Primary offshore financing vehicle registered in Panama." .
-
-threat:FrontCompany_ZephyrShipping a threat:FrontCompany ;
-    rdfs:label "Zephyr Maritime Shipping Corp" ;
-    threat:sanctionID "OFAC-2026-4491" ;
-    threat:jurisdiction "Marshall Islands" ;
-    threat:swiftBIC "ZEPYMH11" ;
-    rdfs:comment "Shell fleet provider operating under flags of convenience." .
 
 threat:FrontCompany_NexusGlobal a threat:FrontCompany ;
     rdfs:label "Nexus Global Holdings Corp" ;
     threat:sanctionID "OFAC-2026-9912" ;
     threat:jurisdiction "Panama" ;
-    threat:swiftBIC "NEXGPA55" ;
-    rdfs:comment "Panamanian asset holding firm linked to Elena Rostova." .
+    threat:hasJurisdiction threat:Jurisdiction_Panama ;
+    threat:swiftBIC "NEXUSPA33" ;
+    rdfs:comment "Panama shell entity used by Elena Rostova for inter-network wire transfers." .
+
+threat:FrontCompany_ZephyrShipping a threat:FrontCompany ;
+    rdfs:label "Zephyr Maritime Shipping Corp" ;
+    threat:sanctionID "OFAC-2026-4491" ;
+    threat:jurisdiction "Marshall Islands" ;
+    threat:hasJurisdiction threat:Jurisdiction_MarshallIslands ;
+    threat:swiftBIC "ZEPHRMH77" ;
+    rdfs:comment "Marshall Islands maritime front company linked to Victor Bout." .
 
 threat:FrontCompany_GlobalApex a threat:FrontCompany ;
     rdfs:label "Apex Cyber Solutions" ;
     threat:sanctionID "OFAC-2026-7782" ;
     threat:jurisdiction "Estonia" ;
-    threat:swiftBIC "APEXEE21" ;
-    rdfs:comment "Cyber procurement shell firm facilitating dark web infrastructure." .
+    threat:hasJurisdiction threat:Jurisdiction_Estonia ;
+    threat:swiftBIC "APEXEE11" ;
+    rdfs:comment "Estonia technology shell company providing infrastructure." .
 
 threat:FrontCompany_KryptonMaritime a threat:FrontCompany ;
     rdfs:label "Krypton Maritime Operations Ltd" ;
     threat:sanctionID "OFAC-2026-9910" ;
     threat:jurisdiction "Cayman Islands" ;
-    threat:swiftBIC "KRYPKY88" ;
-    rdfs:comment "Offshore trust and maritime leasing company in George Town." .
+    threat:hasJurisdiction threat:Jurisdiction_CaymanIslands ;
+    threat:swiftBIC "KRYPTKY55" ;
+    rdfs:comment "Cayman Islands offshore holding shell linked to Alexander Petrov." .
 
-# Money Transfers & Financial Routing
+# Multi-Hop Inter-Entity Money Transfers (ActOfCommerce)
 threat:Transfer_9901 a threat:MoneyTransfer ;
-    rdfs:label "Wire Transfer $1.5M (AeroVanguard -> Helios Energy)" ;
-    threat:hasAmount 1500000.0 ;
-    threat:hasCurrency "USD" ;
+    rdfs:label "Money Transfer $1.5M" ;
     threat:has_sender threat:FrontCompany_AeroVanguard ;
     threat:has_receiver threat:FrontCompany_HeliosEnergy ;
-    rdfs:comment "Sanctioned payment for illicit logistics forwarding in Cyprus." .
+    threat:hasAmount 1500000.0 ;
+    threat:hasCurrency "USD" ;
+    threat:transferDate "2026-03-15T08:30:00Z"^^xsd:dateTime ;
+    threat:originatingJurisdiction threat:Jurisdiction_Panama ;
+    threat:destinationJurisdiction threat:Jurisdiction_Cyprus ;
+    rdfs:comment "Wire transfer from Panamanian front to Cypriot energy shell." .
 
 threat:Transfer_9902 a threat:MoneyTransfer ;
-    rdfs:label "Wire Transfer $850K (Helios Energy -> Caspian Fleet)" ;
-    threat:hasAmount 850000.0 ;
-    threat:hasCurrency "USD" ;
+    rdfs:label "Money Transfer $850k" ;
     threat:has_sender threat:FrontCompany_HeliosEnergy ;
     threat:has_receiver threat:FrontCompany_Caspian ;
-    rdfs:comment "Bunkering and maritime transport settlement in UAE." .
+    threat:hasAmount 850000.0 ;
+    threat:hasCurrency "USD" ;
+    threat:transferDate "2026-04-02T14:15:00Z"^^xsd:dateTime ;
+    threat:originatingJurisdiction threat:Jurisdiction_Cyprus ;
+    threat:destinationJurisdiction threat:Jurisdiction_UAE ;
+    rdfs:comment "Second-hop transfer routing commodities payment to UAE maritime operator." .
 
 threat:Transfer_9903 a threat:MoneyTransfer ;
-    rdfs:label "Wire Transfer $3.2M (Titan Maritime -> AeroVanguard)" ;
-    threat:hasAmount 3200000.0 ;
-    threat:hasCurrency "USD" ;
+    rdfs:label "Money Transfer $3.2M" ;
     threat:has_sender threat:FrontCompany_TitanMaritime ;
     threat:has_receiver threat:FrontCompany_AeroVanguard ;
-    rdfs:comment "Offshore liquidity injection into Panamanian operations." .
+    threat:hasAmount 3200000.0 ;
+    threat:hasCurrency "USD" ;
+    threat:transferDate "2026-02-10T11:00:00Z"^^xsd:dateTime ;
+    threat:originatingJurisdiction threat:Jurisdiction_Panama ;
+    threat:destinationJurisdiction threat:Jurisdiction_Panama ;
+    rdfs:comment "Intra-jurisdiction liquidity transfer to fund cargo fleet operations." .
 
 threat:Transfer_9904 a threat:MoneyTransfer ;
-    rdfs:label "Wire Transfer $1.1M (Caspian Fleet -> Apex Cyber)" ;
-    threat:hasAmount 1100000.0 ;
-    threat:hasCurrency "USD" ;
+    rdfs:label "Money Transfer $1.1M" ;
     threat:has_sender threat:FrontCompany_Caspian ;
     threat:has_receiver threat:FrontCompany_GlobalApex ;
-    rdfs:comment "Cyber surveillance hardware procurement in Tallinn, Estonia." .
+    threat:hasAmount 1100000.0 ;
+    threat:hasCurrency "USD" ;
+    threat:transferDate "2026-05-18T09:45:00Z"^^xsd:dateTime ;
+    threat:originatingJurisdiction threat:Jurisdiction_UAE ;
+    threat:destinationJurisdiction threat:Jurisdiction_Estonia ;
+    rdfs:comment "Third-hop disbursement for cyber infrastructure procurement in Estonia." .
 
 threat:Transfer_9905 a threat:MoneyTransfer ;
-    rdfs:label "Wire Transfer $2.4M (Nexus Global -> Titan Maritime)" ;
-    threat:hasAmount 2400000.0 ;
-    threat:hasCurrency "USD" ;
+    rdfs:label "Money Transfer $2.4M" ;
     threat:has_sender threat:FrontCompany_NexusGlobal ;
     threat:has_receiver threat:FrontCompany_TitanMaritime ;
-    rdfs:comment "Inter-entity holding transfer between Panama shell entities." .
-
-# Schema Properties & Upper Ontology Mappings
-threat:ThreatActor a owl:Class ;
-    rdfs:label "Threat Actor" ;
-    rdfs:subClassOf cco:Person .
-
-threat:FrontCompany a owl:Class ;
-    rdfs:label "Front Company" ;
-    rdfs:subClassOf cco:Organization .
-
-threat:MoneyTransfer a owl:Class ;
-    rdfs:label "Money Transfer" ;
-    rdfs:subClassOf cco:ActOfCommerce .
-
-threat:aliasName a owl:DatatypeProperty ;
-    rdfs:label "alias name" ;
-    rdfs:domain cco:Person ;
-    rdfs:range xsd:string .
-
-threat:sanctionID a owl:DatatypeProperty ;
-    rdfs:label "sanction identifier" ;
-    rdfs:domain cco:Organization ;
-    rdfs:range xsd:string .
-
-threat:jurisdiction a owl:DatatypeProperty ;
-    rdfs:label "jurisdiction" ;
-    rdfs:domain cco:Organization ;
-    rdfs:range xsd:string .
-
-threat:swiftBIC a owl:DatatypeProperty ;
-    rdfs:label "SWIFT BIC" ;
-    rdfs:domain cco:Organization ;
-    rdfs:range xsd:string .
-
-threat:associatedWith a owl:ObjectProperty ;
-    rdfs:label "associated with" ;
-    rdfs:domain threat:ThreatActor ;
-    rdfs:range threat:FrontCompany .
-
-threat:hasAmount a owl:DatatypeProperty ;
-    rdfs:label "has amount" ;
-    rdfs:domain threat:MoneyTransfer ;
-    rdfs:range xsd:decimal .
-
-threat:hasCurrency a owl:DatatypeProperty ;
-    rdfs:label "has currency" ;
-    rdfs:domain threat:MoneyTransfer ;
-    rdfs:range xsd:string .
-
-threat:has_sender a owl:ObjectProperty ;
-    rdfs:label "has sender" ;
-    rdfs:domain threat:MoneyTransfer ;
-    rdfs:range threat:FrontCompany .
-
-threat:has_receiver a owl:ObjectProperty ;
-    rdfs:label "has receiver" ;
-    rdfs:domain threat:MoneyTransfer ;
-    rdfs:range threat:FrontCompany .
+    threat:hasAmount 2400000.0 ;
+    threat:hasCurrency "USD" ;
+    threat:transferDate "2026-01-22T16:20:00Z"^^xsd:dateTime ;
+    threat:originatingJurisdiction threat:Jurisdiction_Panama ;
+    threat:destinationJurisdiction threat:Jurisdiction_Panama ;
+    rdfs:comment "Strategic cross-network liquidity transfer connecting Elena Rostova's shell to Victor Bout's financing vehicle." .
