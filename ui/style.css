@@ -826,6 +826,43 @@ table.bindings-table td {
     font-weight: 600;
 }
 
+/* Embedded Interactive Subgraph Topology Card (In Chat Feed) */
+.embedded-subgraph-card {
+    margin: 0.5rem 0 0.5rem 0;
+    background: #020617;
+    border: 1px solid #1e293b;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.subgraph-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.45rem 0.75rem;
+    background: #0f172a;
+    border-bottom: 1px solid #1e293b;
+}
+
+.subgraph-title {
+    font-size: 0.675rem;
+    font-weight: 700;
+    color: #38bdf8;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.subgraph-canvas {
+    height: 230px;
+    width: 100%;
+    background: radial-gradient(circle at center, #0a0f1d 0%, #020617 100%);
+    position: relative;
+}
+
 /* Embedded Interactive Chart Card */
 .embedded-chart-card {
     margin: 0.5rem 0 0.5rem 0;
