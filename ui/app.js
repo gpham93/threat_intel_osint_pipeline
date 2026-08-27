@@ -1045,60 +1045,137 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
     // Global chart instances registry
     window.chartInstances = {};
 
-    // Helper to generate embedded interactive Chart.js bar graphs
-    function createEmbeddedChartHTML(bindings, queryId, queryText) {
-        if (!bindings || bindings.length === 0) return { html: "", chartData: null };
+    // Intelligent Visualization Decision Engine
+    function determineVisualizationStrategy(bindings, queryText) {
+        if (!bindings || bindings.length === 0) {
+            return { type: "NONE", strategyReason: "No data bindings returned." };
+        }
 
-        const qLower = queryText.toLowerCase();
-        let chartType = "bar";
-        let chartTitle = "";
-        let labels = [];
-        let dataValues = [];
+        const q = queryText.toLowerCase().trim();
 
-        // Scenario 1: Financial Wire Transfers (Amounts)
-        const hasAmount = bindings.some(b => b.amount || b.transferAmount);
-        if (hasAmount) {
-            chartTitle = "FINANCIAL WIRE TRANSFER VOLUME (USD)";
+        // 1. Explicit Chart Requests (User asked for a chart/graph/visualization)
+        const explicitlyRequestsChart = q.includes("bar graph") || q.includes("chart") || q.includes("plot") || q.includes("visualize") || q.includes("histogram") || q.includes("distribution");
+
+        // 2. Financial Aggregation / Multi-transfer comparison
+        const transferRows = bindings.filter(b => b.amount || b.transferAmount);
+        const isFinancialQuery = q.includes("transfer") || q.includes("money") || q.includes("volume") || q.includes("transaction") || q.includes("amount") || q.includes("flow");
+
+        if (explicitlyRequestsChart || (isFinancialQuery && transferRows.length >= 2)) {
+            const labels = [];
+            const dataValues = [];
             bindings.slice(0, 10).forEach(b => {
-                const s = (b.senderLabel || b.companyLabel || b.company || "Sender").split("#").pop().replace(/#\d+/, "");
-                const r = (b.receiverLabel || "Beneficiary").split("#").pop().replace(/#\d+/, "");
-                const lbl = s === r ? s : `${s} ➔ ${r}`;
-                const val = parseFloat(b.amount || b.transferAmount || 0);
-                if (!isNaN(val) && val > 0) {
-                    labels.push(lbl.length > 24 ? lbl.substring(0, 22) + "..." : lbl);
-                    dataValues.push(val);
+                const s = (b.senderLabel || b.companyLabel || b.company || "Originator").split("#").pop().replace(/#\d+/, "").trim();
+                const r = (b.receiverLabel || "Beneficiary").split("#").pop().replace(/#\d+/, "").trim();
+                const lbl = (s && r && s !== r) ? `${s} ➔ ${r}` : s;
+                const amt = parseFloat(b.amount || b.transferAmount || 0);
+                if (!isNaN(amt) && amt > 0) {
+                    labels.push(lbl.length > 26 ? lbl.substring(0, 24) + "..." : lbl);
+                    dataValues.push(amt);
                 }
             });
+
+            if (labels.length >= 2) {
+                return {
+                    type: "BAR_CHART",
+                    title: "FINANCIAL WIRE TRANSFER VOLUME (USD)",
+                    strategyReason: "Quantitative Ranked Bar Chart selected based on multi-entity transfer volume comparison.",
+                    labels: labels,
+                    dataValues: dataValues,
+                    isCurrency: true
+                };
+            }
         }
-        // Scenario 2: Jurisdiction Distribution
-        else if (bindings.some(b => b.jurisdiction)) {
-            chartTitle = "FRONT ENTITY DISTRIBUTION BY JURISDICTION";
+
+        // 3. Geographic / Categorical Distribution across multiple distinct jurisdictions
+        const jurisdictions = bindings.map(b => b.jurisdiction).filter(Boolean);
+        const uniqueJurisdictions = Array.from(new Set(jurisdictions));
+        const isJurisdictionComparison = (q.includes("jurisdiction") || q.includes("secrecy") || q.includes("where") || q.includes("breakdown") || explicitlyRequestsChart) && uniqueJurisdictions.length >= 2;
+
+        if (isJurisdictionComparison) {
             const counts = {};
-            bindings.forEach(b => {
-                const j = b.jurisdiction || "Unknown";
-                counts[j] = (counts[j] || 0) + 1;
-            });
-            labels = Object.keys(counts);
-            dataValues = Object.values(counts);
-        }
-        // Scenario 3: Explicit Chart Request with generic numerical/categorical data
-        else if (qLower.includes("chart") || qLower.includes("graph") || qLower.includes("bar")) {
-            chartTitle = "GRAPH ENTITY METRIC ANALYSIS";
-            bindings.slice(0, 8).forEach((b, idx) => {
-                labels.push((b.label || b.companyLabel || `Entity ${idx+1}`).split("#").pop());
-                dataValues.push(idx + 1);
-            });
+            jurisdictions.forEach(j => counts[j] = (counts[j] || 0) + 1);
+            return {
+                type: "DOUGHNUT_CHART",
+                title: "OFFSHORE ENTITY DISTRIBUTION BY JURISDICTION",
+                strategyReason: "Proportional Doughnut Chart selected to visualize cross-jurisdiction entity allocation.",
+                labels: Object.keys(counts),
+                dataValues: Object.values(counts),
+                isCurrency: false
+            };
         }
 
-        if (labels.length === 0 || dataValues.length === 0) {
-            return { html: "", chartData: null };
+        // 4. Target Threat Actor / Entity Dossier Profile
+        const isProfileIntent = q.includes("who is") || q.includes("tell me about") || q.includes("profile") || q.includes("dossier") || q.includes("actor") || q.includes("operative");
+        const hasActor = bindings.some(b => b.actor || b.actorLabel || b.alias);
+
+        if (isProfileIntent && hasActor) {
+            const actorName = bindings[0].label || bindings[0].actorLabel || "Target Operative";
+            const alias = bindings[0].alias || "N/A";
+            const clearance = bindings[0].clearance || "SECRET";
+            const companies = Array.from(new Set(bindings.map(b => b.companyLabel || b.company).filter(Boolean)));
+
+            return {
+                type: "DOSSIER_CARD",
+                title: `TARGET DOSSIER: ${actorName.toUpperCase()}`,
+                strategyReason: "Executive Intelligence Dossier selected for target threat actor profiling.",
+                actorName: actorName,
+                alias: alias,
+                clearance: clearance,
+                controlledEntities: companies
+            };
         }
 
-        const html = `
+        // 5. Default: Clean Structured Table only (No redundant bar graphs)
+        return {
+            type: "TABLE_ONLY",
+            strategyReason: "Structured Tabular View selected for direct record lookup."
+        };
+    }
+
+    // Helper to generate visual component markup based on reasoned strategy
+    function createVisualizationComponentHTML(strategy, queryId) {
+        if (!strategy || strategy.type === "NONE" || strategy.type === "TABLE_ONLY") {
+            return "";
+        }
+
+        // Dossier Profile Card
+        if (strategy.type === "DOSSIER_CARD") {
+            const chipsHtml = strategy.controlledEntities.map(c => {
+                const cleanC = c.split("#").pop();
+                return `<span class="entity-pill" onclick="focusEntityOnCanvas('${cleanC}')" title="Locate on Canvas">${cleanC}</span>`;
+            }).join("");
+
+            return `
+                <div class="strategy-reason-badge">
+                    <span>💡 Display Strategy: <strong>${strategy.strategyReason}</strong></span>
+                </div>
+                <div class="dossier-card">
+                    <div class="dossier-header-row">
+                        <div class="dossier-title">
+                            <span>🎯 ${strategy.actorName}</span>
+                            ${strategy.alias !== 'N/A' ? `<span style="color: #94a3b8; font-weight: 400; font-size: 0.7rem;">(Alias: ${strategy.alias})</span>` : ''}
+                        </div>
+                        <span class="dossier-clearance">${strategy.clearance}</span>
+                    </div>
+                    <div class="dossier-body">
+                        <div class="dossier-row">
+                            <span class="dossier-label">Controlled Shells:</span>
+                            <div class="dossier-chips">${chipsHtml || '<span style="color: #64748b;">Direct Operative / No Shells</span>'}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Chart.js Visualization Card (Bar or Doughnut)
+        return `
+            <div class="strategy-reason-badge">
+                <span>💡 Display Strategy: <strong>${strategy.strategyReason}</strong></span>
+            </div>
             <div class="embedded-chart-card">
                 <div class="chart-header-row">
                     <div class="chart-title">
-                        <span>📊 ${chartTitle}</span>
+                        <span>📊 ${strategy.title}</span>
                     </div>
                     <div class="chart-actions">
                         <button class="btn-export-action" onclick="exportChartPNG('${queryId}')" title="Download chart image">📊 EXPORT CHART (PNG)</button>
@@ -1109,34 +1186,62 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
                 </div>
             </div>
         `;
-
-        return {
-            html: html,
-            chartData: {
-                labels: labels,
-                dataValues: dataValues,
-                title: chartTitle,
-                isCurrency: hasAmount
-            }
-        };
     }
 
     // Initialize Chart.js instance after DOM insertion
-    function initializeChartInstance(queryId, chartConfig) {
-        if (!window.Chart || !chartConfig) return;
+    function initializeChartInstance(queryId, strategy) {
+        if (!window.Chart || !strategy || (strategy.type !== "BAR_CHART" && strategy.type !== "DOUGHNUT_CHART")) return;
         const canvas = document.getElementById(`chart-canvas-${queryId}`);
         if (!canvas) return;
 
         const ctx = canvas.getContext('2d');
-        const isCurrency = chartConfig.isCurrency;
+        const isCurrency = strategy.isCurrency;
 
+        if (strategy.type === "DOUGHNUT_CHART") {
+            const chart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: strategy.labels,
+                    datasets: [{
+                        data: strategy.dataValues,
+                        backgroundColor: ['#38bdf8', '#4ade80', '#f59e0b', '#ec4899', '#a855f7', '#06b6d4', '#10b981'],
+                        borderColor: '#0f172a',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: '#cbd5e1',
+                                font: { family: "'JetBrains Mono', monospace", size: 10 }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#090d16',
+                            titleColor: '#38bdf8',
+                            bodyColor: '#f8fafc',
+                            borderColor: '#1e293b',
+                            borderWidth: 1
+                        }
+                    }
+                }
+            });
+            window.chartInstances[queryId] = chart;
+            return;
+        }
+
+        // Default Bar Chart
         const chart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: chartConfig.labels,
+                labels: strategy.labels,
                 datasets: [{
-                    label: chartConfig.title,
-                    data: chartConfig.dataValues,
+                    label: strategy.title,
+                    data: strategy.dataValues,
                     backgroundColor: 'rgba(56, 189, 248, 0.45)',
                     borderColor: '#38bdf8',
                     borderWidth: 1.5,
@@ -1270,22 +1375,25 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
         const traceId = `trace-${Date.now()}`;
         const traceHTML = createReasoningTraceHTML(ragData, traceId);
         const structuredTableHTML = createStructuredExportTableHTML(ragData.raw_bindings || [], queryId);
-        const chartResult = createEmbeddedChartHTML(ragData.raw_bindings || [], queryId, queryText);
+
+        // Reason the optimal visual strategy
+        const visualStrategy = determineVisualizationStrategy(ragData.raw_bindings || [], queryText);
+        const visualComponentHTML = createVisualizationComponentHTML(visualStrategy, queryId);
         const formattedAnswer = formatAnswerWithEntityPills(ragData.answer || "Query executed.");
 
         systemMsgDiv.innerHTML = `
             <div class="message-meta">SEMANTIC INTELLIGENCE ASSISTANT (${ragData.llm_engine || "Active"})</div>
             <div class="message-body">${formattedAnswer}</div>
-            ${chartResult.html}
+            ${visualComponentHTML}
             ${structuredTableHTML}
             ${traceHTML}
         `;
         chatFeed.scrollTop = chatFeed.scrollHeight;
 
-        // Initialize Chart.js canvas if chart was generated
-        if (chartResult.chartData) {
+        // Initialize Chart.js canvas if chart was selected by strategy
+        if (visualStrategy.type === "BAR_CHART" || visualStrategy.type === "DOUGHNUT_CHART") {
             setTimeout(() => {
-                initializeChartInstance(queryId, chartResult.chartData);
+                initializeChartInstance(queryId, visualStrategy);
             }, 50);
         }
     }
