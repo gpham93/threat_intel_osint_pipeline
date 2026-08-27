@@ -161,6 +161,24 @@ class GraphRAGQueryEngine:
                 detected_jurisdiction = j
                 break
 
+        # Case 0: Jurisdiction Transfer Activity & Financial Ranking (e.g. "which jurisdiction has the most transfer activity?")
+        is_jurisdiction_query = any(w in q_lower for w in ["jurisdiction", "country", "countries", "secrecy", "region"])
+        is_transfer_query = any(w in q_lower for w in ["transfer", "trsnasfer", "transaction", "payment", "money", "flow", "volume", "capital", "activty", "activity"])
+        is_ranking_query = any(w in q_lower for w in ["most", "highest", "top", "rank", "ranking", "largest", "biggest", "compare", "breakdown", "all"])
+
+        if (is_jurisdiction_query and is_transfer_query) or (is_jurisdiction_query and is_ranking_query):
+            return THREAT_PREFIXES + """
+SELECT DISTINCT ?jurisdiction ?company ?companyLabel ?transfer ?transferAmount ?receiverLabel WHERE {
+    ?company a threat:FrontCompany ;
+             threat:jurisdiction ?jurisdiction .
+    OPTIONAL { ?company rdfs:label ?companyLabel } .
+    ?transfer a threat:MoneyTransfer ;
+              threat:has_sender ?company ;
+              threat:hasAmount ?transferAmount .
+    OPTIONAL { ?transfer threat:has_receiver ?rec . OPTIONAL { ?rec rdfs:label ?receiverLabel } } .
+} ORDER BY DESC(?transferAmount) LIMIT 25
+"""
+
         # Case 1: Target Actor Deep-Dive
         actor_match = next((m for m in matched_entities if m["type"] == "ThreatActor"), None)
         if actor_match or any(w in q_lower for w in ["victor", "bout", "rostova", "volkov", "petrov"]):
@@ -462,6 +480,52 @@ SELECT DISTINCT ?entity ?label ?type ?predicate ?value WHERE {{
                 f"for routing high-value transfers across maritime and defense supply chains."
             )
             return p
+
+        # 2b. Jurisdiction Financial Aggregation & Ranking (e.g. "which jurisdiction has the most transfer activity?")
+        is_jurisdiction_query = any(w in q_lower for w in ["jurisdiction", "country", "countries", "secrecy", "region"])
+        is_transfer_query = any(w in q_lower for w in ["transfer", "trsnasfer", "transaction", "payment", "money", "flow", "volume", "capital", "activty", "activity"])
+        
+        if is_jurisdiction_query and (is_transfer_query or "most" in q_lower or "highest" in q_lower or "rank" in q_lower):
+            juris_totals = {}
+            juris_transfers = {}
+            juris_companies = {}
+
+            for b in bindings:
+                j = b.get("jurisdiction", "Unknown")
+                amt_str = b.get("transferAmount") or b.get("amount") or "0"
+                comp = b.get("companyLabel") or b.get("label") or "Front Organization"
+                try:
+                    amt = float(amt_str)
+                except ValueError:
+                    amt = 0.0
+
+                juris_totals[j] = juris_totals.get(j, 0.0) + amt
+                if amt > 0:
+                    juris_transfers[j] = juris_transfers.get(j, 0) + 1
+                if j not in juris_companies:
+                    juris_companies[j] = set()
+                if comp and comp != "Front Organization":
+                    juris_companies[j].add(comp)
+
+            sorted_juris = sorted(juris_totals.items(), key=lambda x: x[1], reverse=True)
+            if sorted_juris and sorted_juris[0][1] > 0:
+                top_juris, top_amt = sorted_juris[0]
+                top_comps = ", ".join([f"**{c}**" for c in list(juris_companies.get(top_juris, []))[:3]]) or "sanctioned logistics entities"
+                top_tx_count = juris_transfers.get(top_juris, 1)
+
+                other_summaries = []
+                for j, amt in sorted_juris[1:3]:
+                    if amt > 0:
+                        other_summaries.append(f"**{j}** (${amt:,.2f} USD)")
+                other_str = f", followed by {', '.join(other_summaries)}" if other_summaries else ""
+
+                p = (
+                    f"**{top_juris}** exhibits the highest financial transfer activity across the intelligence graph, "
+                    f"accounting for **${top_amt:,.2f} USD** in monitored capital flow across {top_tx_count} major wire transfers "
+                    f"(originating primarily from {top_comps}){other_str}. These funds were routed into European energy trading "
+                    f"and maritime intermediaries to fund offshore operational infrastructure."
+                )
+                return p
 
         # 3. Jurisdiction Briefings (Panama, Cyprus, UAE, etc.)
         if any(j in q_lower for j in KNOWN_JURISDICTIONS) or "secrecy" in q_lower or "jurisdiction" in q_lower:
