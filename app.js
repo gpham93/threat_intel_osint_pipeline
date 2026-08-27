@@ -207,14 +207,25 @@ document.addEventListener("DOMContentLoaded", () => {
         const nodes = [
             { id: "Actor_VictorBout", label: "Victor Bout\n(Threat Actor)", group: "actor", title: "Type: cco:Person", uri: "http://example.org/threat#Actor_VictorBout", category: "Threat Actor", cco: "cco:Person", year: 2024, classification: "UNCLASSIFIED" },
             { id: "Actor_ElenaRostova", label: "Elena Rostova\n(Threat Actor)", group: "actor", title: "Type: cco:Person", uri: "http://example.org/threat#Actor_ElenaRostova", category: "Threat Actor", cco: "cco:Person", year: 2025, classification: "SECRET" },
-            { id: "Transfer_9901", label: "Money Transfer $1.5M\n(ActOfCommerce)", group: "transfer", title: "Type: cco:ActOfCommerce", uri: "http://example.org/threat#Transfer_9901", category: "Money Transfer", cco: "cco:ActOfCommerce", amount: "$1,500,000.00 USD", year: 2025, classification: "SECRET" }
+            { id: "Transfer_9901", label: "Money Transfer $1.5M\n(ActOfCommerce)", group: "transfer", title: "Type: cco:ActOfCommerce", uri: "http://example.org/threat#Transfer_9901", category: "Money Transfer", cco: "cco:ActOfCommerce", amount: "$1,500,000.00 USD", year: 2025, classification: "SECRET" },
+            // First-Class Jurisdiction Individuals (Nodes)
+            { id: "Jurisdiction_Panama", label: "Panama\n(Secrecy Hub)", group: "jurisdiction", title: "Jurisdiction: Panama (PA) | FATF: High Risk", uri: "http://example.org/threat#Jurisdiction_Panama", category: "Jurisdiction", cco: "cco:GeopoliticalEntity", year: 2024, classification: "UNCLASSIFIED" },
+            { id: "Jurisdiction_Cyprus", label: "Cyprus\n(Secrecy Hub)", group: "jurisdiction", title: "Jurisdiction: Cyprus (CY) | FATF: Medium Risk", uri: "http://example.org/threat#Jurisdiction_Cyprus", category: "Jurisdiction", cco: "cco:GeopoliticalEntity", year: 2024, classification: "UNCLASSIFIED" },
+            { id: "Jurisdiction_UAE", label: "UAE\n(Secrecy Hub)", group: "jurisdiction", title: "Jurisdiction: United Arab Emirates (AE) | FATF: High Risk", uri: "http://example.org/threat#Jurisdiction_UAE", category: "Jurisdiction", cco: "cco:GeopoliticalEntity", year: 2024, classification: "UNCLASSIFIED" },
+            { id: "Jurisdiction_Estonia", label: "Estonia\n(Cyber Hub)", group: "jurisdiction", title: "Jurisdiction: Estonia (EE) | FATF: Low Risk", uri: "http://example.org/threat#Jurisdiction_Estonia", category: "Jurisdiction", cco: "cco:GeopoliticalEntity", year: 2024, classification: "UNCLASSIFIED" }
         ];
 
         const edges = [
             { id: "e1", from: "Actor_VictorBout", to: "FrontCompany_CLUSTER-101", label: "associatedWith", color: { color: "#ffffff" }, year: 2024 },
             { id: "e2", from: "Actor_ElenaRostova", to: "FrontCompany_CLUSTER-102", label: "associatedWith", color: { color: "#ffffff" }, year: 2025 },
             { id: "e3", from: "Transfer_9901", to: "FrontCompany_CLUSTER-101", label: "has_sender", color: { color: "#a3a3a3" }, year: 2025 },
-            { id: "e4", from: "Transfer_9901", to: "FrontCompany_CLUSTER-102", label: "has_receiver", color: { color: "#a3a3a3" }, year: 2025 }
+            { id: "e4", from: "Transfer_9901", to: "FrontCompany_CLUSTER-102", label: "has_receiver", color: { color: "#a3a3a3" }, year: 2025 },
+            // Front Company to Jurisdiction Links
+            { id: "ej1", from: "FrontCompany_CLUSTER-101", to: "Jurisdiction_Panama", label: "registeredIn", color: { color: "#10b981" }, year: 2024 },
+            { id: "ej2", from: "FrontCompany_CLUSTER-102", to: "Jurisdiction_Cyprus", label: "registeredIn", color: { color: "#10b981" }, year: 2025 },
+            { id: "ej3", from: "FrontCompany_CLUSTER-103", to: "Jurisdiction_UAE", label: "registeredIn", color: { color: "#10b981" }, year: 2025 },
+            { id: "ej4", from: "FrontCompany_CLUSTER-104", to: "Jurisdiction_Estonia", label: "registeredIn", color: { color: "#10b981" }, year: 2026 },
+            { id: "ej5", from: "FrontCompany_CLUSTER-105", to: "Jurisdiction_Panama", label: "registeredIn", color: { color: "#10b981" }, year: 2026 }
         ];
 
         const keyRingToUse = isScaleMode ? getScaledKeyRing() : STATIC_KEY_RING;
@@ -1179,6 +1190,34 @@ PREFIX threat: <http://example.org/threat#>\n\n`;
                         label: 'has_receiver',
                         color: { color: '#fbbf24' },
                         font: { color: '#fbbf24', size: 8, strokeWidth: 0 },
+                        arrows: 'to'
+                    });
+                }
+            }
+
+            // 5. First-Class Jurisdiction Node (cco:GeopoliticalEntity)
+            const juris = b.jurisdiction;
+            if (juris && juris !== "Unknown") {
+                const jId = `juris_${juris.replace(/\s+/g, '_')}`;
+                if (!nodesMap.has(jId)) {
+                    nodesMap.set(jId, {
+                        id: jId,
+                        label: `${juris}\n(Jurisdiction)`,
+                        color: { background: '#10b981', border: '#ffffff' },
+                        shape: 'hexagon',
+                        size: 16,
+                        font: { color: '#f8fafc', face: 'Inter', size: 10 }
+                    });
+                }
+
+                if (comp1) {
+                    edges.push({
+                        id: `sub_e_${edgeIdCounter++}`,
+                        from: `comp_${comp1.replace(/\s+/g, '_')}`,
+                        to: jId,
+                        label: 'registeredIn',
+                        color: { color: '#10b981' },
+                        font: { color: '#10b981', size: 8, strokeWidth: 0 },
                         arrows: 'to'
                     });
                 }
